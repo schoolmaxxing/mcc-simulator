@@ -14,7 +14,7 @@
         "name": "Sam Peale",
         "2k": "6:28.9",
         "technique": {
-            "port": 4.5,
+            "port": 4.7,
             "starboard": 4.9
         },
         "mentality": 4.2,
@@ -26,7 +26,7 @@
         "name": "Jack Kirk",
         "2k": "6:39.7",
         "technique": {
-            "port": 4.3,
+            "port": 4.6,
             "starboard": 4.0
         },
         "mentality": 4.7,
@@ -54,7 +54,7 @@
             "starboard": 3.8
         },
         "mentality": 4.0,
-        "weight": 200,
+        "weight": 200.0,
         "following": 4.8,
         "best_rate": 35
     },
@@ -93,5 +93,101 @@
         "weight": 148.5,
         "following": 5.0,
         "best_rate": 38
+    },
+    {
+        "name": "Holden Saunders",
+        "2k": "7:11.0",
+        "technique": {
+            "port": 4.7,
+            "starboard": 4.6
+        },
+        "mentality": 4.4,
+        "weight": 133.6,
+        "following": 4.7,
+        "best_rate": 36
+    },
+    {
+        "name": "Finnegan Switzer",
+        "2k": "7:10.6",
+        "technique": {
+            "port": 4.1,
+            "starboard": 4.7
+        },
+        "mentality": 4.5,
+        "weight": 151.0,
+        "following": 3.6,
+        "best_rate": 37
+    },
+    {
+        "name": "Adrian Wiklund",
+        "2k": "6:45.9",
+        "technique": {
+            "port": 4.3,
+            "starboard": 3.4
+        },
+        "mentality": 4.6,
+        "weight": 195.6,
+        "following": 3.8,
+        "best_rate": 35
+    },
+    {
+        "name": "James Milward",
+        "2k": "7:09.6",
+        "technique": {
+            "port": 3.2,
+            "starboard": 4.0
+        },
+        "mentality": 3.9,
+        "weight": 138.7,
+        "following": 3.7,
+        "best_rate": 37
+    },
+    {
+        "name": "Sean Noh",
+        "2k": "6:59.2",
+        "technique": {
+            "port": 4.4,
+            "starboard": 3.5
+        },
+        "mentality": 4.5,
+        "weight": 153.2,
+        "following": 3.7,
+        "best_rate": 37
+    },
+    {
+        "name": "Owen Kelly",
+        "2k": "7:22.1",
+        "technique": {
+            "port": 2.7,
+            "starboard": 3.9
+        },
+        "mentality": 4.2,
+        "weight": 136.7,
+        "following": 3.3,
+        "best_rate": 34
+    },
+    {
+        "name": "Minh Tran",
+        "2k": "6:52.6",
+        "technique": {
+            "port": 4.4,
+            "starboard": 2.9
+        },
+        "mentality": 4.1,
+        "weight": 151.0,
+        "following": 4.3,
+        "best_rate": 36
+    },
+    {
+        "name": "Arham Jain",
+        "2k": "6:52.6",
+        "technique": {
+            "port": 3.5,
+            "starboard": 4.5
+        },
+        "mentality": 2.7,
+        "weight": 123.4,
+        "following": 4.7,
+        "best_rate": 36
     }
 ]

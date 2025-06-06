@@ -1,45 +1,88 @@
-body {
-    font-family: Arial, sans-serif;
-    background-color: #f0f8ff;
-    color: #333;
-    text-align: center;
-    margin: 0;
-    padding: 20px;
+/* --- DARK THEME & ACCENTS --- */
+:root {
+    --bs-body-bg: #121212;
+    --bs-body-color: #e0e0e0;
+    --bs-border-color: #444;
+    --bs-secondary-bg: #1e1e1e;
+    --brand-red: #e50914;
+    --brand-red-hover: #f40612;
+}
+
+.card {
+    background-color: var(--bs-secondary-bg);
+    border: 1px solid var(--bs-border-color);
+}
+
+.btn-danger {
+    background-color: var(--brand-red);
+    border-color: var(--brand-red);
+}
+
+.btn-danger:hover {
+    background-color: var(--brand-red-hover);
+    border-color: var(--brand-red-hover);
 }
 
 h1,
-h2 {
-    color: #004d99;
+h2,
+h3 {
+    color: #fff;
 }
 
-#main-container {
-    display: flex;
-    justify-content: space-around;
-    align-items: flex-start;
+/* Custom Tooltip */
+.tooltip .tooltip-inner {
+    background-color: var(--brand-red);
+    color: #fff;
+    font-weight: 500;
+    text-align: left;
 }
 
-#roster-selection {
-    width: 25%;
-    background: #fff;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.bs-tooltip-auto[data-popper-placement^=right] .tooltip-arrow::before,
+.bs-tooltip-end .tooltip-arrow::before {
+    border-right-color: var(--brand-red);
 }
+
+.bs-tooltip-auto[data-popper-placement^=left] .tooltip-arrow::before,
+.bs-tooltip-start .tooltip-arrow::before {
+    border-left-color: var(--brand-red);
+}
+
+
+/* --- LAYOUT & COMPONENTS --- */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+#roster-search {
+    background-color: #333;
+    border-color: #555;
+}
+
+#roster-search:focus {
+    background-color: #333;
+    border-color: var(--brand-red);
+    box-shadow: 0 0 0 0.25rem rgba(229, 9, 20, 0.25);
+    color: #fff;
+}
+
 
 #roster-list {
     display: flex;
     flex-direction: column;
     gap: 10px;
+    height: 350px;
+    overflow-y: auto;
+    padding-right: 10px;
 }
 
 .roster-card {
-    border: 1px solid #ccc;
     padding: 10px;
     border-radius: 5px;
     cursor: grab;
-    background-color: #e6f7ff;
-    transition: background-color 0.3s;
+    background-color: #333;
+    border: 1px solid #555;
     text-align: center;
+    font-weight: 500;
 }
 
 .roster-card.dragging {
@@ -47,151 +90,122 @@ h2 {
     cursor: grabbing;
 }
 
-.boat-setup {
-    display: flex;
-    gap: 20px;
-}
-
-.lineup {
-    width: 200px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.seat {
-    border: 2px dashed #004d99;
-    padding: 10px;
-    height: 40px;
-    border-radius: 5px;
-    background-color: #fff;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-style: italic;
+/* --- Seat List Group Cleanup --- */
+.lineup .list-group-item {
+    background-color: #2a2a2a;
+    border-color: #444;
     color: #888;
+    font-style: italic;
 }
 
 .seat.drag-over {
-    background-color: #cceeff;
-    border-style: solid;
+    background-color: #444;
+    border-color: var(--brand-red);
 }
 
 .seat .roster-card {
-    background-color: #a0d8f0;
-    pointer-events: none;
+    width: 75%;
+    background-color: #e50914;
+    color: #fff;
+    cursor: default;
+    border: none;
+    font-style: normal;
+    padding: 5px;
+    font-size: 0.9rem;
 }
 
-#controls {
-    margin: 20px 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    flex-wrap: wrap;
-}
 
 #speed-control-container {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    background-color: #e9ecef;
-    padding: 5px 10px;
-    border-radius: 5px;
-}
-
-#speed-slider {
-    cursor: pointer;
-}
-
-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
-button:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-}
-
-#race-container {
-    margin-top: 20px;
-    width: 95%;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
-    background: #fff;
-    padding: 20px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    padding: 8px 12px;
+    background-color: #2a2a2a;
     border-radius: 8px;
 }
 
-#race-track {
-    position: relative;
+.form-range {
+    width: 150px;
+}
+
+.form-range::-webkit-slider-runnable-track {
+    height: 8px;
+    background-color: #444;
+}
+
+.form-range::-moz-range-track {
+    height: 8px;
+    background-color: #444;
+}
+
+.form-range::-webkit-slider-thumb {
+    height: 24px;
+    width: 12px;
+    margin-top: -8px;
+    background-color: var(--brand-red);
+}
+
+.form-range::-moz-range-thumb {
+    height: 20px;
+    width: 12px;
+    background-color: var(--brand-red);
+}
+
+#race-canvas {
     width: 100%;
-    height: 150px;
-    background-color: #66ccff;
-    border: 2px solid #004d99;
-    overflow: hidden;
-    margin-bottom: 20px;
-}
-
-.boat {
-    position: absolute;
-    width: 120px;
-    height: 35px;
-    background-color: #8B4513;
-    /* SaddleBrown */
-    color: white;
-    text-align: center;
-    line-height: 35px;
-    border-radius: 5px 10px 10px 5px;
-    left: 10px;
-    transition: left 0.1s linear;
-}
-
-.boat span {
-    font-weight: bold;
-}
-
-#boat1 {
-    top: 30px;
-}
-
-#boat2 {
-    top: 90px;
-}
-
-#finish-line {
-    position: absolute;
-    right: 5px;
-    top: 0;
-    width: 5px;
-    height: 100%;
-    background-color: red;
+    height: 200px;
+    background-color: #0d1b2a;
 }
 
 #race-info {
-    text-align: left;
-    max-width: 400px;
-    margin: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    justify-items: center;
+    align-items: center;
+    gap: 1rem;
+}
+
+.race-stat {
+    text-align: center;
+}
+
+.race-stat strong {
+    font-size: 0.8rem;
+    color: #aaa;
+    text-transform: uppercase;
+}
+
+.race-stat p {
+    font-size: 1.2rem;
+    font-weight: 500;
+    margin-bottom: 0;
+    color: #fff;
 }
 
 #winner-message {
-    color: #28a745;
-    font-size: 18px;
+    font-size: 1.2rem;
     font-weight: bold;
-    text-align: center;
+    color: var(--brand-red);
     white-space: pre-wrap;
-    /* Allows line breaks for results */
+}
+
+.boat-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+}
+
+.rower-stats-card {
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 12px;
+}
+
+.rower-stats-card h4 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    color: #e0e0e0;
+}
+
+.rower-stats-card p {
+    margin: 2px 0;
 }
