@@ -6,15 +6,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const boat2Lineup = document.getElementById('boat2-lineup');
     const boat1Avg2kEl = document.getElementById('boat1-avg-2k');
     const boat2Avg2kEl = document.getElementById('boat2-avg-2k');
+    const boat1AvgWeightEl = document.getElementById('boat1-avg-weight');
+    const boat2AvgWeightEl = document.getElementById('boat2-avg-weight');
     const boat1AvgQualityEl = document.getElementById('boat1-avg-quality');
     const boat2AvgQualityEl = document.getElementById('boat2-avg-quality');
     const startRaceBtn = document.getElementById('start-race');
     const reraceBtn = document.getElementById('rerace-btn');
     const resetBoatsBtn = document.getElementById('reset-boats');
     const autofillBtn = document.getElementById('autofill-boats');
+    const setLineupsBtn = document.getElementById('set-lineups-btn');
     const winnerMessageEl = document.getElementById('winner-message');
     const speedSlider = document.getElementById('speed-slider');
     const speedLabel = document.getElementById('speed-label');
+    const windSlider = document.getElementById('wind-slider');
+    const windLabel = document.getElementById('wind-label');
     const timerEl = document.getElementById('race-timer');
     const boat1RateEl = document.getElementById('boat1-rate');
     const boat1SplitEl = document.getElementById('boat1-split');
@@ -31,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let boat2Data = Array(8).fill(null);
     let raceAnimationId;
     let raceSpeedMultiplier = 1;
+    let windCondition = 0;
     let lastFrameTime = 0;
     let raceTime = 0;
     let boat1State = {};
@@ -122,9 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initializeTooltips() {
         const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl);
-        });
+        tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el, {
+            html: true
+        }));
     }
 
     function setupBoatLineups() {
@@ -156,26 +162,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const allSeats = document.querySelectorAll('.seat');
         allSeats.forEach(seat => addSeatListeners(seat));
-        updateAvg2kDisplays();
+        updateBoatHeaderStats();
     }
 
-    function updateAvg2kDisplays() {
+    function updateBoatHeaderStats() {
+        // Boat 1
         const boat1Crew = boat1Data.filter(r => r !== null);
         if (boat1Crew.length > 0) {
-            let total2kSeconds = 0;
-            boat1Crew.forEach(r => total2kSeconds += parseTimeToSeconds(r['2k']));
-            boat1Avg2kEl.textContent = `(Avg 2k: ${formatTime(total2kSeconds / boat1Crew.length)})`;
+            const avg2k = boat1Crew.reduce((sum, r) => sum + parseTimeToSeconds(r['2k']), 0) / boat1Crew.length;
+            const avgWt = boat1Crew.reduce((sum, r) => sum + r.weight, 0) / boat1Crew.length;
+            boat1Avg2kEl.textContent = `(Avg 2k: ${formatTime(avg2k)})`;
+            boat1AvgWeightEl.textContent = `(Avg Wt: ${avgWt.toFixed(1)} lbs)`;
         } else {
             boat1Avg2kEl.textContent = '';
+            boat1AvgWeightEl.textContent = '';
         }
-
+        // Boat 2
         const boat2Crew = boat2Data.filter(r => r !== null);
         if (boat2Crew.length > 0) {
-            let total2kSeconds = 0;
-            boat2Crew.forEach(r => total2kSeconds += parseTimeToSeconds(r['2k']));
-            boat2Avg2kEl.textContent = `(Avg 2k: ${formatTime(total2kSeconds / boat2Crew.length)})`;
+            const avg2k = boat2Crew.reduce((sum, r) => sum + parseTimeToSeconds(r['2k']), 0) / boat2Crew.length;
+            const avgWt = boat2Crew.reduce((sum, r) => sum + r.weight, 0) / boat2Crew.length;
+            boat2Avg2kEl.textContent = `(Avg 2k: ${formatTime(avg2k)})`;
+            boat2AvgWeightEl.textContent = `(Avg Wt: ${avgWt.toFixed(1)} lbs)`;
         } else {
             boat2Avg2kEl.textContent = '';
+            boat2AvgWeightEl.textContent = '';
         }
     }
 
@@ -187,15 +198,12 @@ document.addEventListener('DOMContentLoaded', () => {
         card.textContent = rower.name;
         card.setAttribute('data-bs-toggle', 'tooltip');
         card.setAttribute('data-bs-placement', 'right');
-        const tooltipContent = `2k: ${rower['2k']} | Weight: ${rower.weight}lbs
-Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starboard} ★
-| Mentality: ${rower.mentality} ★ | Following: ${rower.following} ★
-| Best Rate: ${rower.best_rate} spm`;
+        const tooltipContent = `2k: ${rower['2k']} | Wt: ${rower.weight} lbs<br>Port Tech: ${rower.technique.port} ★<br>Starboard Tech: ${rower.technique.starboard} ★<br>Mentality: ${rower.mentality} ★<br>Following: ${rower.following} ★<br>Best Rate: ${rower.best_rate} spm`;
         card.setAttribute('data-bs-title', tooltipContent);
         return card;
     }
 
-    // --- DRAG AND DROP & AUTOFILL ---
+    // DRAG AND DROP & AUTOFILL
     function addSeatListeners(seat) {
         seat.addEventListener('dragover', e => {
             e.preventDefault();
@@ -219,26 +227,34 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
     function autofillBoats() {
         let availableRowers1 = [...allRowers].sort(() => 0.5 - Math.random());
         let availableRowers2 = [...allRowers].sort(() => 0.5 - Math.random());
-
         for (let i = 0; i < 8; i++) {
             if (boat1Data[i] === null) {
                 let nextRower = availableRowers1.pop();
-                while (boat1Data.some(r => r && r.name === nextRower.name)) {
+                while (boat1Data.some(r => r && r.name === nextRower.name) || boat2Data.some(r => r && r.name === nextRower.name)) {
                     nextRower = availableRowers1.pop();
                 }
                 boat1Data[i] = nextRower;
             }
         }
-
         for (let i = 0; i < 8; i++) {
             if (boat2Data[i] === null) {
                 let nextRower = availableRowers2.pop();
-                while (boat2Data.some(r => r && r.name === nextRower.name)) {
+                while (boat2Data.some(r => r && r.name === nextRower.name) || boat1Data.some(r => r && r.name === nextRower.name)) {
                     nextRower = availableRowers2.pop();
                 }
                 boat2Data[i] = nextRower;
             }
         }
+        setupBoatLineups();
+    }
+
+    function setPredefinedLineups() {
+        const v1Names = ["Carson Fast", "Sam Peale", "Jack Kirk", "Gunnar Westland", "Henry Terrell", "Matthew Matar", "Alex Barnes", "Andrew Egorin"];
+        const v2Names = ["Holden Saunders", "Finnegan Switzer", "Adrian Wiklund", "James Milward", "Sean Noh", "Owen Kelly", "Minh Tran", "Arham Jain"];
+
+        boat1Data = v1Names.map(name => allRowers.find(rower => rower.name === name) || null);
+        boat2Data = v2Names.map(name => allRowers.find(rower => rower.name === name) || null);
+
         setupBoatLineups();
     }
 
@@ -253,7 +269,9 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
         reraceBtn.classList.add('d-none');
         resetBoatsBtn.disabled = true;
         autofillBtn.disabled = true;
+        setLineupsBtn.disabled = true;
         speedSlider.disabled = false;
+        windSlider.disabled = true;
         winnerMessageEl.textContent = '';
         raceTime = 0;
         resetBoatStates();
@@ -262,16 +280,12 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
             if (lastFrameTime === 0) lastFrameTime = currentTime;
             const timeDelta = (currentTime - lastFrameTime) / 1000;
             lastFrameTime = currentTime;
-
             if (!boat1State.isFinished || !boat2State.isFinished) raceTime += timeDelta * raceSpeedMultiplier;
             timerEl.textContent = `${formatTime(raceTime)}`;
-
             updateBoat(boat1Data, boat1State, boat2State, timeDelta, raceSpeedMultiplier);
             updateBoat(boat2Data, boat2State, boat1State, timeDelta, raceSpeedMultiplier);
-
             drawRaceCanvas();
             updateRowerDetailsUI();
-
             boat1RateEl.textContent = `${boat1State.strokeRate.toFixed(0)}`;
             boat2RateEl.textContent = `${boat2State.strokeRate.toFixed(0)}`;
             if (raceTime > 0) {
@@ -284,7 +298,6 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
                     boat2AvgQualityEl.textContent = (boat2State.rowerStats.reduce((sum, r) => sum + r.quality, 0) / 8).toFixed(1);
                 }
             }
-
             if (boat1State.isFinished && boat2State.isFinished) {
                 const winner = boat1State.finishTime < boat2State.finishTime ? "Boat 1" : "Boat 2";
                 winnerMessageEl.innerHTML = `Race Finished! - Boat 1: ${formatTime(boat1State.finishTime)} | Boat 2: ${formatTime(boat2State.finishTime)} - Winner: ${winner}`;
@@ -292,7 +305,9 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
                 reraceBtn.disabled = false;
                 resetBoatsBtn.disabled = false;
                 autofillBtn.disabled = false;
+                setLineupsBtn.disabled = false;
                 speedSlider.disabled = true;
+                windSlider.disabled = false;
             } else {
                 raceAnimationId = requestAnimationFrame(raceLoop);
             }
@@ -315,7 +330,6 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
         const recoveryDuration = fullStrokeDuration * 0.6;
         let previousPhase = boatState.phase;
         boatState.timeInPhase += timeDelta * speedMultiplier;
-
         if (boatState.phase === 'drive' && boatState.timeInPhase >= driveDuration) {
             boatState.phase = 'recovery';
             boatState.timeInPhase = 0;
@@ -339,13 +353,11 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
                 }
             }
         }
-
         individualStats.forEach((stat, i) => stat.quality = boatState.rowerStats[i].quality);
         boatState.rowerStats = individualStats;
         let velocityMultiplier = (boatState.phase === 'drive') ? 1 + 0.5 * Math.sin(boatState.timeInPhase / driveDuration * Math.PI) : 1 - 0.25 * (boatState.timeInPhase / recoveryDuration);
         const instantaneousVelocity = avgSpeed * velocityMultiplier * powerModifier;
         boatState.distance += instantaneousVelocity * timeDelta * speedMultiplier;
-
         if (boatState.distance >= 1500) {
             boatState.isFinished = true;
             const overshoot = boatState.distance - 1500;
@@ -396,7 +408,11 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
         reraceBtn.classList.add('d-none');
         resetBoatsBtn.disabled = false;
         autofillBtn.disabled = false;
+        setLineupsBtn.disabled = false;
         speedSlider.disabled = false;
+        windSlider.disabled = false;
+        windSlider.value = 0;
+        windLabel.textContent = "Normal";
         speedSlider.value = 1;
         speedLabel.textContent = "1x";
         raceSpeedMultiplier = 1;
@@ -415,12 +431,16 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
             individualStats: []
         };
 
-        let total2kSeconds = 0;
+        let total2kSeconds = 0,
+            totalWeight = 0;
         boat.forEach(rower => {
             total2kSeconds += parseTimeToSeconds(rower['2k']);
+            totalWeight += rower.weight;
         });
         const avg500mSplit = (total2kSeconds / 8) / 4;
-        const baseSpeed = 56000 / Math.pow(avg500mSplit, 2);
+
+        const PACE_SCALER = 845;
+        const baseSpeed = PACE_SCALER / Math.pow(avg500mSplit, 1.1);
 
         let powerModifier = 1.0,
             totalTechAdjustment = 0,
@@ -436,7 +456,6 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
         if ((isLosing && boatState.distance >= 1150) || (!isLosing && boatState.distance >= 1200)) {
             if (boatState.racePhase !== 'start') boatState.racePhase = 'sprint';
         }
-
         switch (boatState.racePhase) {
             case 'start':
                 const stroke = boatState.strokeCount;
@@ -463,7 +482,7 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
             const qualityWattsModifier = 1.0 + (boatState.rowerStats[index].quality - 4.0) * 0.02;
             const actualWatts = baseWatts * powerModifier * ((boatState.racePhase === 'sprint') ? 1.05 : 1.0) * qualityWattsModifier;
             const strokeQuality = boatState.rowerStats[index].quality;
-            totalTechAdjustment += (strokeQuality - 4.5) * 0.16;
+            totalTechAdjustment += (strokeQuality - 4.5) * 0.20;
             if (isLosing) totalMentalityAdjustment += (rower.mentality - 4.0) * 0.004;
             if (boatState.racePhase === 'sprint') totalMentalityAdjustment += (rower.mentality - 4.0) * 0.006;
             if (index > 0) totalFollowingAdjustment += (rower.following - 4.5) * 0.01;
@@ -479,8 +498,25 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
             });
         });
 
-        const rateAdjustment = -(totalRateDifference / 8) * 0.003;
-        const avgSpeed = baseSpeed + (totalTechAdjustment / 8) + (totalFollowingAdjustment / 7) + rateAdjustment + (totalMentalityAdjustment / 8);
+        const rateAdjustment = -(totalRateDifference / 8) * 0.013;
+        const avgWeight = totalWeight / 8;
+        const baselineWeight = 170;
+        const weightAdjustment = (baselineWeight - avgWeight) * 0.004;
+
+        let windAdjustment = 0;
+        // In a tailwind, lighter boats get a bigger boost.
+        // In a headwind, lighter boats get a bigger penalty.
+        const weightDifference = baselineWeight - avgWeight;
+
+        if (windCondition === 1) { // Tailwind
+            const tailwindFactor = 0.0015; // This factor determines how much more boost lighter boats get.
+            windAdjustment = 0.169 + (weightDifference * tailwindFactor);
+        } else if (windCondition === -1) { // Headwind
+            const headwindFactor = 0.0018; // This factor determines how much more penalty lighter boats get.
+            windAdjustment = -0.238 - (weightDifference * headwindFactor);
+        }
+
+        const avgSpeed = baseSpeed + (totalTechAdjustment / 8) + (totalFollowingAdjustment / 7) + rateAdjustment + (totalMentalityAdjustment / 8) + weightAdjustment + windAdjustment;
         return {
             avgSpeed: Math.max(0, avgSpeed),
             strokeRate: currentRate,
@@ -496,7 +532,6 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
         return `${minutes}:${seconds.padStart(4, '0')}`;
     }
 
-    // --- CANVAS DRAWING (REWRITTEN) ---
     function drawInitialCanvas() {
         const finishPadding = 50;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -516,35 +551,23 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
     function drawRaceCanvas() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         drawInitialCanvas();
-        drawBoat(boat1State, canvas.height / 3, '#e50914', boat1Data);
-        drawBoat(boat2State, canvas.height * 2 / 3, '#f5f5f5', boat2Data);
+        drawBoat(boat1State, canvas.height / 4, '#e50914', boat1Data);
+        drawBoat(boat2State, canvas.height * 3 / 4, '#f5f5f5', boat2Data);
     }
 
     function drawBoat(boatState, y, color, boatData) {
         const raceDistance = 1500;
-        const boatLengthOnCanvas = 120;
+        const boatLengthOnCanvas = 100; // Changed from 120 to 100
         const boatWidth = 10;
         const riggerWidth = 6;
-        const oarInboard = 12;
-        const oarOutboard = 40;
+        const oarInboard = 10;
+        const oarOutboard = 30;
         const startPadding = 60;
         const finishPadding = 50;
         const raceableWidth = canvas.width - startPadding - finishPadding;
+        const boatBowX = startPadding + ((boatState.distance / raceDistance) * raceableWidth);
 
-        const progress = boatState.distance / raceDistance;
-        const boatBowX = startPadding + (progress * raceableWidth);
-
-        boatState.puddles.forEach(puddle => {
-            const puddleX = startPadding + ((puddle.x / raceDistance) * raceableWidth);
-            ctx.fillStyle = `rgba(173, 216, 230, ${0.1 * puddle.life})`;
-            ctx.beginPath();
-            ctx.ellipse(puddleX - 5, y - (boatWidth + riggerWidth), 4, 2.5, 0, 0, 2 * Math.PI);
-            ctx.ellipse(puddleX - 5, y + (boatWidth + riggerWidth), 4, 2.5, 0, 0, 2 * Math.PI);
-            puddle.life -= 0.02;
-            ctx.fill();
-        });
-        boatState.puddles = boatState.puddles.filter(p => p.life > 0);
-
+        // Animate splashes
         boatState.splashes.forEach(s => {
             s.x += s.vx;
             s.y += s.vy;
@@ -557,32 +580,65 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
         });
         boatState.splashes = boatState.splashes.filter(s => s.life > 0);
 
+        // Compute stroke angle
         const fullStrokeDuration = 60 / boatState.strokeRate;
         const driveProgress = (boatState.phase === 'drive') ? boatState.timeInPhase / (fullStrokeDuration * 0.4) : 0;
         const recoveryProgress = (boatState.phase === 'recovery') ? boatState.timeInPhase / (fullStrokeDuration * 0.6) : 0;
+        const catchAngleDeg = -36;
+        const finishAngleDeg = 60;
 
-        let angle = (boatState.phase === 'drive') ? -60 + (100 * driveProgress) : 40 - (100 * recoveryProgress);
-        const swingAngle = angle * (Math.PI / 180);
+        let angle = (boatState.phase === 'drive') ?
+            catchAngleDeg + (finishAngleDeg - catchAngleDeg) * driveProgress :
+            finishAngleDeg - (finishAngleDeg - catchAngleDeg) * recoveryProgress;
 
+        const swingAngle = angle * (Math.PI / 180); // radians
+
+        // Draw Oars
         for (let i = 0; i < 8; i++) {
             const seatX = boatBowX + boatLengthOnCanvas - ((i + 1.5) * (boatLengthOnCanvas / 9));
-            const side = (i % 2 === 0) ? 1 : -1;
+            const isPort = (i + 1) % 2 === 0;
+            const sideOffset = isPort ? -riggerWidth : riggerWidth;
+
             const oarlockX = seatX;
-            const oarlockY = y + (side * riggerWidth);
+            const oarlockY = y + sideOffset;
 
-            const handleX = oarlockX - Math.sin(swingAngle) * oarInboard;
-            const handleY = oarlockY - Math.cos(swingAngle) * oarInboard * side;
+            ctx.save();
+            ctx.translate(oarlockX, oarlockY);
+            if (isPort) {
+                ctx.scale(1, -1); // Flip vertically
+                ctx.rotate(-swingAngle); // Now rotate in the same direction as starboard
+            } else {
+                ctx.rotate(-swingAngle);
+            }
 
-            const bladeX = oarlockX + Math.sin(swingAngle) * oarOutboard;
-            const bladeY = oarlockY + Math.cos(swingAngle) * oarOutboard * side;
 
+            // Shaft
+            ctx.fillStyle = '#999';
+            ctx.fillRect(-1, 0, 2, oarOutboard);
+            ctx.fillRect(-1, -oarInboard, 2, oarInboard);
+
+            // Blade
+            ctx.fillStyle = color;
+            const bladeWidth = (boatState.phase === 'drive') ? 8 : 2;
+            ctx.fillRect(-bladeWidth / 2, oarOutboard, bladeWidth, 10);
+
+            ctx.restore();
+
+            // Splash Effect on Catch
             if (boatState.justCaught && boatData[i]) {
                 const quality = boatState.rowerStats[i].quality;
                 const numParticles = Math.max(0, Math.floor((5.5 - quality) * 4));
+                const catchAngleRad = catchAngleDeg * (Math.PI / 180);
+
+                // Calculate the position of the oar blade at the catch
+                const oarRotation = isPort ? -catchAngleRad : -catchAngleRad;
+                const bladeTipX = oarlockX - Math.sin(oarRotation) * oarOutboard;
+                const bladeTipY = oarlockY + Math.cos(oarRotation) * oarOutboard * (isPort ? -1 : 1);
+
                 for (let p = 0; p < numParticles; p++) {
                     boatState.splashes.push({
-                        x: bladeX,
-                        y: bladeY,
+                        x: bladeTipX,
+                        y: bladeTipY,
                         vx: (Math.random() - 0.7) * 4,
                         vy: -Math.random() * 2.5,
                         life: 1,
@@ -590,24 +646,11 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
                     });
                 }
             }
-
-            ctx.strokeStyle = '#999';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(handleX, handleY);
-            ctx.lineTo(bladeX, bladeY);
-            ctx.stroke();
-
-            ctx.fillStyle = color;
-            ctx.lineWidth = 1;
-            const bladeWidth = (boatState.phase === 'drive') ? 8 : 2;
-            const oarAngle = Math.atan2(bladeY - handleY, bladeX - handleX);
-            ctx.beginPath();
-            ctx.ellipse(bladeX, bladeY, 8, bladeWidth, oarAngle, 0, 2 * Math.PI);
-            ctx.fill();
         }
+
         if (boatState.justCaught) boatState.justCaught = false;
 
+        // Draw Hull
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.moveTo(boatBowX + boatLengthOnCanvas, y);
@@ -617,14 +660,23 @@ Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starb
         ctx.fill();
     }
 
+
+
     // --- GLOBAL EVENT LISTENERS ---
     startRaceBtn.addEventListener('click', startRace);
     reraceBtn.addEventListener('click', startRace);
     resetBoatsBtn.addEventListener('click', resetBoats);
     autofillBtn.addEventListener('click', autofillBoats);
+    setLineupsBtn.addEventListener('click', setPredefinedLineups);
     rosterSearch.addEventListener('input', (e) => renderRosterList(e.target.value));
     speedSlider.addEventListener('input', (e) => {
         raceSpeedMultiplier = parseFloat(e.target.value);
         speedLabel.textContent = `${raceSpeedMultiplier}x`;
+    });
+    windSlider.addEventListener('input', (e) => {
+        windCondition = parseInt(e.target.value, 10);
+        if (windCondition === -1) windLabel.textContent = 'Headwind';
+        else if (windCondition === 0) windLabel.textContent = 'Normal';
+        else if (windCondition === 1) windLabel.textContent = 'Tailwind';
     });
 });

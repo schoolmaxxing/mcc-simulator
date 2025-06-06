@@ -35,6 +35,7 @@ h3 {
     color: #fff;
     font-weight: 500;
     text-align: left;
+    white-space: pre-wrap;
 }
 
 .bs-tooltip-auto[data-popper-placement^=right] .tooltip-arrow::before,
@@ -114,11 +115,14 @@ body {
     font-size: 0.9rem;
 }
 
-
-#speed-control-container {
+/* --- Controls Styling --- */
+.control-group {
     padding: 8px 12px;
     background-color: #2a2a2a;
     border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .form-range {

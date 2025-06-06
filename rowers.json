@@ -38,8 +38,8 @@
         "name": "Gunnar Westland",
         "2k": "6:31.9",
         "technique": {
-            "port": 4.5,
-            "starboard": 5.0
+            "port": 4.9,
+            "starboard": 4.0
         },
         "mentality": 4.7,
         "weight": 166.8,
@@ -56,14 +56,14 @@
         "mentality": 4.0,
         "weight": 200.0,
         "following": 4.8,
-        "best_rate": 35
+        "best_rate": 33
     },
     {
         "name": "Matthew Matar",
         "2k": "6:38.1",
         "technique": {
-            "port": 4.3,
-            "starboard": 4.8
+            "port": 2.0,
+            "starboard": 4.9
         },
         "mentality": 3.9,
         "weight": 190.5,
@@ -75,10 +75,10 @@
         "2k": "6:57.4",
         "technique": {
             "port": 5.0,
-            "starboard": 4.9
+            "starboard": 2.5
         },
         "mentality": 4.1,
-        "weight": 135.5,
+        "weight": 145.0,
         "following": 5.0,
         "best_rate": 38
     },
@@ -90,7 +90,7 @@
             "starboard": 5.0
         },
         "mentality": 5.0,
-        "weight": 148.5,
+        "weight": 155.6,
         "following": 5.0,
         "best_rate": 38
     },
@@ -125,7 +125,7 @@
             "port": 4.3,
             "starboard": 3.4
         },
-        "mentality": 4.6,
+        "mentality": 4.1,
         "weight": 195.6,
         "following": 3.8,
         "best_rate": 35
