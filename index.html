@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MCC Simulator</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <h1>MCC Crew Club Simulator</h1>
+    <div id="main-container">
+        <div id="roster-selection">
+            <h2>Rower Roster (Drag to a seat)</h2>
+            <div id="roster-list"></div>
+        </div>
+
+        <div class="boat-setup">
+            <div id="boat1-setup">
+                <h2>Boat 1 <span id="boat1-avg-2k"></span></h2>
+                <div id="boat1-lineup" class="lineup">
+                </div>
+            </div>
+            <div id="boat2-setup">
+                <h2>Boat 2 <span id="boat2-avg-2k"></span></h2>
+                <div id="boat2-lineup" class="lineup">
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="controls">
+        <button id="start-race">Start Race</button>
+        <button id="reset-boats">Reset Boats</button>
+        <button id="autofill-boats">Autofill</button>
+        <div id="speed-control-container">
+            <label for="speed-slider">Race Speed:</label>
+            <input type="range" id="speed-slider" min="1" max="8" value="1" step="1">
+            <span id="speed-label">1x</span>
+        </div>
+    </div>
+
+    <div id="race-container">
+        <div id="race-track">
+            <div id="boat1" class="boat"><span>Boat 1</span></div>
+            <div id="boat2" class="boat"><span>Boat 2</span></div>
+            <div id="finish-line"></div>
+        </div>
+        <div id="race-info">
+            <p>Race Distance: 1500m</p>
+            <p id="race-timer">Time: 0:00.0</p>
+            <p id="boat1-rate">Boat 1 Rate: 0</p>
+            <p id="boat1-split">Boat 1 Split: 0:00.0/500m</p>
+            <p id="boat2-rate">Boat 2 Rate: 0</p>
+            <p id="boat2-split">Boat 2 Split: 0:00.0/500m</p>
+            <p id="boat1-distance">Boat 1 Distance: 0m</p>
+            <p id="boat2-distance">Boat 2 Distance: 0m</p>
+            <h2 id="winner-message"></h2>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
