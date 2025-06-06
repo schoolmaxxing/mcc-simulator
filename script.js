@@ -189,8 +189,8 @@ document.addEventListener('DOMContentLoaded', () => {
         card.setAttribute('data-bs-placement', 'right');
         const tooltipContent = `2k: ${rower['2k']} | Weight: ${rower.weight}lbs
 Port Tech: ${rower.technique.port} ★ | Starboard Tech: ${rower.technique.starboard} ★
-Mentality: ${rower.mentality} ★ | Following: ${rower.following} ★
-Best Rate: ${rower.best_rate} spm`;
+| Mentality: ${rower.mentality} ★ | Following: ${rower.following} ★
+| Best Rate: ${rower.best_rate} spm`;
         card.setAttribute('data-bs-title', tooltipContent);
         return card;
     }

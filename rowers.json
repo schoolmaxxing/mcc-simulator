@@ -180,7 +180,7 @@
     },
     {
         "name": "Arham Jain",
-        "2k": "6:52.6",
+        "2k": "7:19.2",
         "technique": {
             "port": 3.5,
             "starboard": 4.5
@@ -188,6 +188,18 @@
         "mentality": 2.7,
         "weight": 123.4,
         "following": 4.7,
+        "best_rate": 36
+    },
+    {
+        "name": "Mickey Bekele",
+        "2k": "7:35.6",
+        "technique": {
+            "port": 3.5,
+            "starboard": 4.6
+        },
+        "mentality": 3.9,
+        "weight": 132.0,
+        "following": 4.3,
         "best_rate": 36
     }
 ]
