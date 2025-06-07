@@ -82,7 +82,9 @@ document.addEventListener('DOMContentLoaded', () => {
             rowerStats: initialRowerStats,
             puddles: [],
             splashes: [],
-            justCaught: false
+            justCaught: false,
+            animationStrokeTime: 0,
+            powerModifier: 0
         };
         boat2State = {
             distance: 0,
@@ -96,7 +98,9 @@ document.addEventListener('DOMContentLoaded', () => {
             rowerStats: initialRowerStats,
             puddles: [],
             splashes: [],
-            justCaught: false
+            justCaught: false,
+            animationStrokeTime: 0,
+            powerModifier: 0
         };
         updateRowerDetailsUI();
     }
@@ -325,6 +329,10 @@ document.addEventListener('DOMContentLoaded', () => {
             individualStats
         } = calculateBoatPhysics(boatData, boatState, opponentState.distance);
         boatState.strokeRate = strokeRate;
+        boatState.powerModifier = powerModifier;
+
+        boatState.animationStrokeTime += timeDelta * speedMultiplier;
+
         const fullStrokeDuration = 60 / strokeRate;
         const driveDuration = fullStrokeDuration * 0.4;
         const recoveryDuration = fullStrokeDuration * 0.6;
@@ -343,7 +351,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     life: 1
                 });
                 boatState.justCaught = true;
-                for (let i = 0; i < boatData.length; i++) {
+                for (let i = 0; i < 8; i++) {
                     const rower = boatData[i];
                     if (rower) {
                         const isPort = i % 2 === 0;
@@ -459,10 +467,35 @@ document.addEventListener('DOMContentLoaded', () => {
         switch (boatState.racePhase) {
             case 'start':
                 const stroke = boatState.strokeCount;
-                if (stroke <= 2) currentRate = (stroke === 1) ? 52 : 48;
-                else if (stroke <= 4) currentRate = 46;
-                else boatState.racePhase = 'power-20';
-                powerModifier = (stroke === 1) ? 0.7 : ((stroke === 0 || stroke === 2) ? 0.85 : 1.0);
+                if (stroke > 5) {
+                    boatState.racePhase = 'power-20';
+                } else {
+                    switch (stroke) {
+                        case 1: // First stroke: Three-quarter
+                            currentRate = 52;
+                            powerModifier = 0.50;
+                            break;
+                        case 2: // Second stroke: Half
+                            currentRate = 48;
+                            powerModifier = 0.75;
+                            break;
+                        case 3: // Third stroke: Three-quarter
+                            currentRate = 46;
+                            powerModifier = 1.25;
+                            break;
+                        case 4: // Fourth stroke: Full
+                            currentRate = 44;
+                            powerModifier = 1.0;
+                            break;
+                        case 5: // Fifth stroke: Full
+                            currentRate = 42;
+                            powerModifier = 1.0;
+                            break;
+                        default: // Handles stroke 0 (before the race starts)
+                            powerModifier = 0;
+                            break;
+                    }
+                }
                 break;
             case 'power-20':
                 currentRate = baseRate + 2;
@@ -553,35 +586,83 @@ document.addEventListener('DOMContentLoaded', () => {
         drawBoat(boat2State, canvas.height * 3 / 4, '#f5f5f5', boat2Data);
     }
 
-    function drawBoat(boatState, y, color, boatData) {
-        // Define race and boat dimensions in meters
-        const raceDistanceMeters = 1500;
-        const boatLengthMeters = 25; // Approx. length of an 8+
+    /**
+     * A single, unified function to calculate the visual state of the oars.
+     * It handles all race phases and uses different timing ratios for the start vs. the main race.
+     * @param {object} boatState The current state of the boat.
+     * @returns {object} An object containing the { swingAngle, isVisualDrivePhase }.
+     */
+    function getOarAnimationState(boatState) {
+        const fullStrokeDuration = 60 / boatState.strokeRate;
+        const catchAngleDeg = -32;
+        const finishAngleDeg = 60;
+        let angle;
+        let isVisualDrivePhase = false;
 
-        // Define canvas dimensions
+        // Determine animation timing ratio based on race phase
+        let driveRatio, recoveryRatio;
+        if (boatState.racePhase === 'start') {
+            // Use a 5:5 ratio for a fast recovery during the high-rate start
+            driveRatio = 0.3;
+            recoveryRatio = 0.7;
+        } else {
+            // Use a 4:6 ratio for a more realistic feel during the main race
+            driveRatio = 0.6;
+            recoveryRatio = 0.4;
+        }
+
+        // Determine the stroke's range of motion.
+        // For partial strokes at the start, the CATCH angle is shortened.
+        const angleRange = finishAngleDeg - catchAngleDeg;
+        const currentCatchAngle = catchAngleDeg + (angleRange * (1 - boatState.powerModifier));
+
+
+        if (fullStrokeDuration > 0) {
+            const animationDriveDuration = fullStrokeDuration * driveRatio;
+            const animationRecoveryDuration = fullStrokeDuration * recoveryRatio;
+            let loopedAnimationTime = boatState.animationStrokeTime % fullStrokeDuration;
+
+            if (loopedAnimationTime <= animationDriveDuration) {
+                isVisualDrivePhase = true;
+                const progress = loopedAnimationTime / animationDriveDuration;
+                // Animate from a dynamic catch to a constant finish
+                angle = currentCatchAngle + (finishAngleDeg - currentCatchAngle) * progress;
+            } else {
+                isVisualDrivePhase = false;
+                const timeInRecovery = loopedAnimationTime - animationDriveDuration;
+                const progress = timeInRecovery / animationRecoveryDuration;
+                // Always recover from the constant finish to the FULL catch
+                angle = finishAngleDeg + (catchAngleDeg - finishAngleDeg) * progress;
+            }
+        } else {
+            angle = catchAngleDeg;
+        }
+
+        const swingAngle = angle * (Math.PI / 180);
+        return { swingAngle, isVisualDrivePhase };
+    }
+
+
+    function drawBoat(boatState, y, color, boatData) {
+        const raceDistanceMeters = 1500;
+        const boatLengthMeters = 25;
         const startPadding = 0;
         const finishPadding = 50;
         const raceableWidth = canvas.width - startPadding - finishPadding;
-
-        // Scale boat length to canvas pixels
         const boatLengthOnCanvas = (boatLengthMeters / raceDistanceMeters) * raceableWidth;
-
-        // Define other visual properties
         const boatWidth = 5;
         const riggerWidth = 6;
         const oarInboard = 2;
         const oarOutboard = 6;
+        const catchAngleDeg = -60;
 
-        // Calculate the stern's position on the canvas.
-        // The stern starts at the start line (startPadding) when distance is 0.
         const sternX = startPadding + ((boatState.distance / raceDistanceMeters) * raceableWidth);
         const bowX = sternX + boatLengthOnCanvas;
 
-        // Animate splashes from oar catches
         boatState.splashes.forEach(s => {
             s.x += s.vx;
             s.y += s.vy;
-            s.vy += 0.1; // gravity
+            s.vy += 0.1;
             s.life -= 0.03;
             ctx.globalAlpha = Math.max(0, s.life);
             ctx.fillStyle = 'rgba(215, 235, 245, 0.8)';
@@ -590,23 +671,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         boatState.splashes = boatState.splashes.filter(s => s.life > 0);
 
-        // Compute stroke angle based on the dynamic stroke rate from the physics engine
-        const fullStrokeDuration = 60 / boatState.strokeRate;
-        const driveDuration = fullStrokeDuration * 0.6;
-        const recoveryDuration = fullStrokeDuration * 0.4;
-        const driveProgress = (boatState.phase === 'drive') ? boatState.timeInPhase / driveDuration : 0;
-        const recoveryProgress = (boatState.phase === 'recovery') ? boatState.timeInPhase / recoveryDuration : 0;
-        
-        const catchAngleDeg = -36;
-        const finishAngleDeg = 60;
-        let angle = (boatState.phase === 'drive') ?
-            catchAngleDeg + (finishAngleDeg - catchAngleDeg) * driveProgress :
-            finishAngleDeg - (finishAngleDeg - catchAngleDeg) * recoveryProgress;
-        const swingAngle = angle * (Math.PI / 180); // Convert to radians for canvas rotation
+        // Get the animation state from the single, unified function
+        const { swingAngle, isVisualDrivePhase } = getOarAnimationState(boatState);
 
-        // Draw Oars
         for (let i = 0; i < 8; i++) {
-            // Position seats evenly along the hull
             const seatX = bowX - ((i + 1.5) * (boatLengthOnCanvas / 9));
             const isPort = (i + 1) % 2 === 0;
             const sideOffset = isPort ? -riggerWidth : riggerWidth;
@@ -615,7 +683,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             ctx.save();
             ctx.translate(oarlockX, oarlockY);
-            // Flip port side oars to rotate correctly
             if (isPort) {
                 ctx.scale(1, -1); 
                 ctx.rotate(-swingAngle);
@@ -623,19 +690,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 ctx.rotate(-swingAngle);
             }
 
-            // Draw oar shaft
             ctx.fillStyle = '#999';
             ctx.fillRect(1, -2.5, 1, oarOutboard);
             ctx.fillRect(1, -2.5-oarInboard, 1, oarInboard);
 
-            // Draw oar blade
             ctx.fillStyle = color;
-            const bladeWidth = (boatState.phase === 'drive') ? 4 : 1; // Blade appears wider in water
+            const bladeWidth = isVisualDrivePhase ? 4 : 1;
             ctx.fillRect(-bladeWidth / 2 + 1.5, oarOutboard - 3, bladeWidth, 5);
 
             ctx.restore();
 
-            // Create a splash effect on the catch, based on rower quality
             if (boatState.justCaught && boatData[i]) {
                 const quality = boatState.rowerStats[i].quality;
                 const numParticles = Math.max(0, Math.floor((5.5 - quality) * 2));
@@ -658,14 +722,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Draw Hull
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.moveTo(bowX, y); // Start at the bow
-        ctx.bezierCurveTo(sternX + boatLengthOnCanvas * 0.7, y - boatWidth / 2, sternX + boatLengthOnCanvas * 0.3, y - boatWidth / 2, sternX, y); // Top edge
-        ctx.bezierCurveTo(sternX + boatLengthOnCanvas * 0.3, y + boatWidth / 2, sternX + boatLengthOnCanvas * 0.7, y + boatWidth / 2, bowX, y); // Bottom edge
+        ctx.moveTo(bowX, y);
+        ctx.bezierCurveTo(sternX + boatLengthOnCanvas * 0.7, y - boatWidth / 2, sternX + boatLengthOnCanvas * 0.3, y - boatWidth / 2, sternX, y);
+        ctx.bezierCurveTo(sternX + boatLengthOnCanvas * 0.3, y + boatWidth / 2, sternX + boatLengthOnCanvas * 0.7, y + boatWidth / 2, bowX, y);
         ctx.closePath();
         ctx.fill();
     }
-
-
 
     // --- GLOBAL EVENT LISTENERS ---
     startRaceBtn.addEventListener('click', startRace);
