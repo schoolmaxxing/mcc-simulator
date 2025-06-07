@@ -504,15 +504,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const weightAdjustment = (baselineWeight - avgWeight) * 0.004;
 
         let windAdjustment = 0;
-        // In a tailwind, lighter boats get a bigger boost.
-        // In a headwind, lighter boats get a bigger penalty.
         const weightDifference = baselineWeight - avgWeight;
 
         if (windCondition === 1) { // Tailwind
-            const tailwindFactor = 0.0015; // This factor determines how much more boost lighter boats get.
+            const tailwindFactor = 0.0015;
             windAdjustment = 0.169 + (weightDifference * tailwindFactor);
         } else if (windCondition === -1) { // Headwind
-            const headwindFactor = 0.0018; // This factor determines how much more penalty lighter boats get.
+            const headwindFactor = 0.0018;
             windAdjustment = -0.238 - (weightDifference * headwindFactor);
         }
 
@@ -556,22 +554,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function drawBoat(boatState, y, color, boatData) {
-        const raceDistance = 1500;
-        const boatLengthOnCanvas = 100; // Changed from 120 to 100
-        const boatWidth = 10;
-        const riggerWidth = 6;
-        const oarInboard = 10;
-        const oarOutboard = 30;
-        const startPadding = 60;
+        // Define race and boat dimensions in meters
+        const raceDistanceMeters = 1500;
+        const boatLengthMeters = 25; // Approx. length of an 8+
+
+        // Define canvas dimensions
+        const startPadding = 0;
         const finishPadding = 50;
         const raceableWidth = canvas.width - startPadding - finishPadding;
-        const boatBowX = startPadding + ((boatState.distance / raceDistance) * raceableWidth);
 
-        // Animate splashes
+        // Scale boat length to canvas pixels
+        const boatLengthOnCanvas = (boatLengthMeters / raceDistanceMeters) * raceableWidth;
+
+        // Define other visual properties
+        const boatWidth = 5;
+        const riggerWidth = 6;
+        const oarInboard = 2;
+        const oarOutboard = 6;
+
+        // Calculate the stern's position on the canvas.
+        // The stern starts at the start line (startPadding) when distance is 0.
+        const sternX = startPadding + ((boatState.distance / raceDistanceMeters) * raceableWidth);
+        const bowX = sternX + boatLengthOnCanvas;
+
+        // Animate splashes from oar catches
         boatState.splashes.forEach(s => {
             s.x += s.vx;
             s.y += s.vy;
-            s.vy += 0.1;
+            s.vy += 0.1; // gravity
             s.life -= 0.03;
             ctx.globalAlpha = Math.max(0, s.life);
             ctx.fillStyle = 'rgba(215, 235, 245, 0.8)';
@@ -580,82 +590,77 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         boatState.splashes = boatState.splashes.filter(s => s.life > 0);
 
-        // Compute stroke angle
+        // Compute stroke angle based on the dynamic stroke rate from the physics engine
         const fullStrokeDuration = 60 / boatState.strokeRate;
-        const driveProgress = (boatState.phase === 'drive') ? boatState.timeInPhase / (fullStrokeDuration * 0.4) : 0;
-        const recoveryProgress = (boatState.phase === 'recovery') ? boatState.timeInPhase / (fullStrokeDuration * 0.6) : 0;
+        const driveDuration = fullStrokeDuration * 0.6;
+        const recoveryDuration = fullStrokeDuration * 0.4;
+        const driveProgress = (boatState.phase === 'drive') ? boatState.timeInPhase / driveDuration : 0;
+        const recoveryProgress = (boatState.phase === 'recovery') ? boatState.timeInPhase / recoveryDuration : 0;
+        
         const catchAngleDeg = -36;
         const finishAngleDeg = 60;
-
         let angle = (boatState.phase === 'drive') ?
             catchAngleDeg + (finishAngleDeg - catchAngleDeg) * driveProgress :
             finishAngleDeg - (finishAngleDeg - catchAngleDeg) * recoveryProgress;
-
-        const swingAngle = angle * (Math.PI / 180); // radians
+        const swingAngle = angle * (Math.PI / 180); // Convert to radians for canvas rotation
 
         // Draw Oars
         for (let i = 0; i < 8; i++) {
-            const seatX = boatBowX + boatLengthOnCanvas - ((i + 1.5) * (boatLengthOnCanvas / 9));
+            // Position seats evenly along the hull
+            const seatX = bowX - ((i + 1.5) * (boatLengthOnCanvas / 9));
             const isPort = (i + 1) % 2 === 0;
             const sideOffset = isPort ? -riggerWidth : riggerWidth;
-
             const oarlockX = seatX;
             const oarlockY = y + sideOffset;
 
             ctx.save();
             ctx.translate(oarlockX, oarlockY);
+            // Flip port side oars to rotate correctly
             if (isPort) {
-                ctx.scale(1, -1); // Flip vertically
-                ctx.rotate(-swingAngle); // Now rotate in the same direction as starboard
+                ctx.scale(1, -1); 
+                ctx.rotate(-swingAngle);
             } else {
                 ctx.rotate(-swingAngle);
             }
 
-
-            // Shaft
+            // Draw oar shaft
             ctx.fillStyle = '#999';
-            ctx.fillRect(-1, 0, 2, oarOutboard);
-            ctx.fillRect(-1, -oarInboard, 2, oarInboard);
+            ctx.fillRect(1, -2.5, 1, oarOutboard);
+            ctx.fillRect(1, -2.5-oarInboard, 1, oarInboard);
 
-            // Blade
+            // Draw oar blade
             ctx.fillStyle = color;
-            const bladeWidth = (boatState.phase === 'drive') ? 8 : 2;
-            ctx.fillRect(-bladeWidth / 2, oarOutboard, bladeWidth, 10);
+            const bladeWidth = (boatState.phase === 'drive') ? 4 : 1; // Blade appears wider in water
+            ctx.fillRect(-bladeWidth / 2 + 1.5, oarOutboard - 3, bladeWidth, 5);
 
             ctx.restore();
 
-            // Splash Effect on Catch
+            // Create a splash effect on the catch, based on rower quality
             if (boatState.justCaught && boatData[i]) {
                 const quality = boatState.rowerStats[i].quality;
-                const numParticles = Math.max(0, Math.floor((5.5 - quality) * 4));
+                const numParticles = Math.max(0, Math.floor((5.5 - quality) * 2));
                 const catchAngleRad = catchAngleDeg * (Math.PI / 180);
-
-                // Calculate the position of the oar blade at the catch
                 const oarRotation = isPort ? -catchAngleRad : -catchAngleRad;
                 const bladeTipX = oarlockX - Math.sin(oarRotation) * oarOutboard;
                 const bladeTipY = oarlockY + Math.cos(oarRotation) * oarOutboard * (isPort ? -1 : 1);
 
                 for (let p = 0; p < numParticles; p++) {
                     boatState.splashes.push({
-                        x: bladeTipX,
-                        y: bladeTipY,
-                        vx: (Math.random() - 0.7) * 4,
-                        vy: -Math.random() * 2.5,
-                        life: 1,
-                        size: Math.random() * 2 + 1
+                        x: bladeTipX, y: bladeTipY,
+                        vx: (Math.random() - 0.7) * 0.8, vy: -Math.random() * 1.5,
+                        life: 1, size: Math.random() + 1
                     });
                 }
             }
         }
-
         if (boatState.justCaught) boatState.justCaught = false;
 
         // Draw Hull
         ctx.fillStyle = color;
         ctx.beginPath();
-        ctx.moveTo(boatBowX + boatLengthOnCanvas, y);
-        ctx.bezierCurveTo(boatBowX + boatLengthOnCanvas * 0.7, y - boatWidth / 2, boatBowX + boatLengthOnCanvas * 0.3, y - boatWidth / 2, boatBowX, y);
-        ctx.bezierCurveTo(boatBowX + boatLengthOnCanvas * 0.3, y + boatWidth / 2, boatBowX + boatLengthOnCanvas * 0.7, y + boatWidth / 2, boatBowX + boatLengthOnCanvas, y);
+        ctx.moveTo(bowX, y); // Start at the bow
+        ctx.bezierCurveTo(sternX + boatLengthOnCanvas * 0.7, y - boatWidth / 2, sternX + boatLengthOnCanvas * 0.3, y - boatWidth / 2, sternX, y); // Top edge
+        ctx.bezierCurveTo(sternX + boatLengthOnCanvas * 0.3, y + boatWidth / 2, sternX + boatLengthOnCanvas * 0.7, y + boatWidth / 2, bowX, y); // Bottom edge
         ctx.closePath();
         ctx.fill();
     }
