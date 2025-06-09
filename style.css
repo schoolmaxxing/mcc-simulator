@@ -1,18 +1,342 @@
-/* --- DARK THEME & ACCENTS --- */
+/* --- GAME UI THEME & ACCENTS --- */
 :root {
-    --bs-body-bg: #121212;
-    --bs-body-color: #e0e0e0;
-    --bs-border-color: #444;
-    --bs-secondary-bg: #1e1e1e;
-    --brand-red: #e50914;
-    --brand-red-hover: #f40612;
+    /* User-Defined Palette */
+    --night: #080f0fff;
+    --ash-gray: #a4bab7ff;
+    --cream: #eff2c0ff;
+    --khaki: #bea57dff;
+    --auburn: #a52422ff;
+
+    /* Theme Mapping */
+    --bg-primary: var(--night);
+    --bg-secondary: #111818;
+    /* Lighter version of night */
+    --bg-tertiary: #1A2121;
+    --border-sleek: rgba(164, 186, 183, 0.2);
+    /* Subtle border for clean look */
+    --text-primary: var(--cream);
+    --text-secondary: var(--ash-gray);
+    --brand-red: var(--auburn);
+    --brand-red-hover: #d13e3b;
+
+    /* Boat Colors */
+    --boat1-color: var(--auburn);
+    --boat2-color: var(--cream);
+    --boat3-color: var(--khaki);
+
+    /* Rarity Colors */
+    --rarity-common: #9d9d9d;
+    --rarity-uncommon: #1eff00;
+    --rarity-rare: #0070dd;
+    --rarity-mythic: var(--brand-red);
+    /* Changed to red */
+    --rarity-legendary: #ff8000;
 }
 
-.card {
-    background-color: var(--bs-secondary-bg);
-    border: 1px solid var(--bs-border-color);
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
+h1,
+.h1,
+h2,
+.h2,
+h3,
+.h3,
+h4,
+.h4,
+h5,
+.h5 {
+    color: var(--cream);
+    font-weight: 600;
+}
+
+/* --- MAIN LAYOUT GRID --- */
+.main-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: auto auto 1fr auto;
+    gap: 1rem;
+    grid-template-areas:
+        "header header header header"
+        "roster boat1 boat2 boat3"
+        "controls controls controls controls"
+        "visuals visuals visuals visuals"
+        "telemetry telemetry telemetry telemetry";
+    transition: grid-template-columns 0.3s ease-in-out;
+}
+
+.main-header {
+    grid-area: header;
+}
+
+.roster-panel {
+    grid-area: roster;
+}
+
+#boat1-panel {
+    grid-area: boat1;
+}
+
+#boat2-panel {
+    grid-area: boat2;
+}
+
+#boat3-panel {
+    grid-area: boat3;
+}
+
+.race-controls-panel {
+    grid-area: controls;
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid var(--border-sleek);
+}
+
+.race-visuals-panel {
+    grid-area: visuals;
+}
+
+.telemetry-panel {
+    grid-area: telemetry;
+}
+
+
+/* --- CUSTOM PANEL STYLES --- */
+.roster-panel,
+.boat-panel,
+.race-visuals-panel,
+.boat-details {
+    background-color: var(--bg-secondary);
+    border-radius: 8px;
+    border: 1px solid var(--border-sleek);
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    background-color: transparent;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-sleek);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-body {
+    padding: 1rem;
+    flex-grow: 1;
+}
+
+/* Roster */
+#roster-search {
+    background-color: var(--bg-tertiary);
+    border-color: var(--border-sleek);
+    color: var(--cream);
+}
+
+#roster-search:focus {
+    border-color: var(--auburn);
+    box-shadow: 0 0 0 0.25rem rgba(165, 36, 34, 0.25);
+}
+
+#roster-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 400px;
+    overflow-y: auto;
+    padding-right: 10px;
+}
+
+.roster-card {
+    padding: 10px;
+    border-radius: 5px;
+    cursor: grab;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-sleek);
+    text-align: center;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.roster-card:hover {
+    color: var(--cream);
+    border-color: var(--auburn);
+}
+
+.roster-card.dragging {
+    opacity: 0.5;
+    cursor: grabbing;
+}
+
+
+/* Boat Lineups */
+.lineup .list-group-item {
+    background-color: var(--bg-tertiary);
+    border-color: var(--border-sleek);
+    color: var(--text-secondary);
+}
+
+.seat.drag-over {
+    background-color: var(--auburn);
+    border-color: var(--brand-red-hover);
+}
+
+.seat .roster-card {
+    width: 75%;
+    cursor: default;
+    border: none;
+    padding: 5px;
+    font-size: 0.9rem;
+}
+
+#boat1-panel .seat .roster-card {
+    background-color: var(--boat1-color);
+    color: var(--cream);
+}
+
+#boat2-panel .seat .roster-card {
+    background-color: var(--boat2-color);
+    color: #000;
+}
+
+#boat3-panel .seat .roster-card {
+    background-color: var(--boat3-color);
+    color: #000;
+}
+
+h2[contenteditable="true"] {
+    cursor: pointer;
+    border-bottom: 2px dotted var(--border-sleek);
+    outline: none;
+    transition: border-color 0.2s ease-in-out;
+}
+
+h2[contenteditable="true"]:focus {
+    border-bottom: 2px solid var(--khaki);
+}
+
+
+/* --- COOLER ROWER CARD POPUP --- */
+#roster-card-popup {
+    display: none;
+    position: absolute;
+    width: 260px;
+    background: radial-gradient(ellipse at bottom, #1a2c2c 0%, var(--bg-secondary) 70%);
+    border: 2px solid;
+    /* Updated border */
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.7);
+    z-index: 1080;
+    pointer-events: none;
+    padding: 1rem;
+    overflow: hidden;
+}
+
+/* Rarity border colors */
+#roster-card-popup.rarity-Common {
+    border-color: var(--rarity-common);
+}
+
+#roster-card-popup.rarity-Uncommon {
+    border-color: var(--rarity-uncommon);
+}
+
+#roster-card-popup.rarity-Rare {
+    border-color: var(--rarity-rare);
+}
+
+#roster-card-popup.rarity-Mythic {
+    border-color: var(--rarity-mythic);
+}
+
+#roster-card-popup.rarity-Legendary {
+    border-color: var(--rarity-legendary);
+}
+
+/* Rarity text colors */
+#roster-card-popup .rarity-text {
+    font-weight: bold;
+}
+
+#roster-card-popup.rarity-Common .rarity-text {
+    color: var(--rarity-common);
+}
+
+#roster-card-popup.rarity-Uncommon .rarity-text {
+    color: var(--rarity-uncommon);
+}
+
+#roster-card-popup.rarity-Rare .rarity-text {
+    color: var(--rarity-rare);
+}
+
+#roster-card-popup.rarity-Mythic .rarity-text {
+    color: var(--rarity-mythic);
+}
+
+#roster-card-popup.rarity-Legendary .rarity-text {
+    color: var(--rarity-legendary);
+}
+
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.75rem;
+}
+
+.popup-header h4 {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    font-weight: 700;
+}
+
+.popup-header .rower-2k {
+    font-size: 1.1rem;
+    color: var(--khaki);
+    font-weight: 600;
+}
+
+.popup-divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border-sleek), transparent);
+    margin: 0.5rem 0;
+}
+
+.popup-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem 1rem;
+    font-size: 0.9rem;
+    margin-top: 0.75rem;
+}
+
+.popup-stat {
+    display: flex;
+    flex-direction: column;
+}
+
+.popup-stat .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+}
+
+.popup-stat .stat-value {
+    font-size: 1rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* --- CONTROLS & RACE INFO --- */
 .btn-danger {
     background-color: var(--brand-red);
     border-color: var(--brand-red);
@@ -23,156 +347,79 @@
     border-color: var(--brand-red-hover);
 }
 
-h1,
-h2,
-h3 {
-    color: #fff;
+.btn-secondary {
+    background-color: var(--bg-tertiary);
+    border-color: var(--border-sleek);
+    color: var(--ash-gray);
 }
 
-/* Custom Tooltip */
-.tooltip .tooltip-inner {
-    background-color: var(--brand-red);
-    color: #fff;
-    font-weight: 500;
-    text-align: left;
-    white-space: pre-wrap;
+.btn-secondary:hover {
+    background-color: #2d3838;
+    border-color: var(--khaki);
+    color: var(--cream);
 }
 
-.bs-tooltip-auto[data-popper-placement^=right] .tooltip-arrow::before,
-.bs-tooltip-end .tooltip-arrow::before {
-    border-right-color: var(--brand-red);
+.btn-outline-secondary {
+    border-color: var(--border-sleek);
+    color: var(--ash-gray);
 }
 
-.bs-tooltip-auto[data-popper-placement^=left] .tooltip-arrow::before,
-.bs-tooltip-start .tooltip-arrow::before {
-    border-left-color: var(--brand-red);
+.btn-outline-secondary:hover {
+    background-color: var(--bg-tertiary);
+    border-color: var(--khaki);
+    color: var(--cream);
 }
 
-
-/* --- LAYOUT & COMPONENTS --- */
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
-
-#roster-search {
-    background-color: #333;
-    border-color: #555;
-}
-
-#roster-search:focus {
-    background-color: #333;
-    border-color: var(--brand-red);
-    box-shadow: 0 0 0 0.25rem rgba(229, 9, 20, 0.25);
-    color: #fff;
-}
-
-
-#roster-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    height: 350px;
-    overflow-y: auto;
-    padding-right: 10px;
-}
-
-.roster-card {
-    padding: 10px;
-    border-radius: 5px;
-    cursor: grab;
-    background-color: #333;
-    border: 1px solid #555;
-    text-align: center;
-    font-weight: 500;
-}
-
-.roster-card.dragging {
-    opacity: 0.5;
-    cursor: grabbing;
-}
-
-/* --- Seat List Group Cleanup --- */
-.lineup .list-group-item {
-    background-color: #2a2a2a;
-    border-color: #444;
-    color: #888;
-    font-style: italic;
-}
-
-.seat.drag-over {
-    background-color: #444;
-    border-color: var(--brand-red);
-}
-
-.seat .roster-card {
-    width: 75%;
-    background-color: #e50914;
-    color: #fff;
-    cursor: default;
-    border: none;
-    font-style: normal;
-    padding: 5px;
-    font-size: 0.9rem;
-}
-
-/* --- Controls Styling --- */
 .control-group {
     padding: 8px 12px;
-    background-color: #2a2a2a;
+    background-color: var(--bg-tertiary);
     border-radius: 8px;
     display: flex;
     align-items: center;
     gap: 10px;
 }
 
-.form-range {
-    width: 150px;
-}
-
-.form-range::-webkit-slider-runnable-track {
-    height: 8px;
-    background-color: #444;
-}
-
-.form-range::-moz-range-track {
-    height: 8px;
-    background-color: #444;
+.control-group .badge {
+    background-color: var(--bg-primary);
 }
 
 .form-range::-webkit-slider-thumb {
-    height: 24px;
-    width: 12px;
-    margin-top: -8px;
     background-color: var(--brand-red);
 }
 
 .form-range::-moz-range-thumb {
-    height: 20px;
-    width: 12px;
     background-color: var(--brand-red);
+}
+
+.form-select {
+    background-color: var(--bg-tertiary);
+    border-color: var(--border-sleek);
+    color: var(--text-secondary);
 }
 
 #race-canvas {
     width: 100%;
     height: 200px;
     background-color: #0d1b2a;
+    border-radius: 8px;
+}
+
+.race-info-footer {
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-top: 1px solid var(--border-sleek);
 }
 
 #race-info {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     justify-items: center;
-    align-items: center;
     gap: 1rem;
-}
-
-.race-stat {
-    text-align: center;
 }
 
 .race-stat strong {
     font-size: 0.8rem;
-    color: #aaa;
+    color: var(--text-secondary);
     text-transform: uppercase;
 }
 
@@ -180,25 +427,51 @@ body {
     font-size: 1.2rem;
     font-weight: 500;
     margin-bottom: 0;
-    color: #fff;
+    color: var(--cream);
+}
+
+#boat1-panel .panel-header h2,
+.boat1-stat p {
+    color: var(--boat1-color) !important;
+}
+
+#boat2-panel .panel-header h2,
+.boat2-stat p {
+    color: var(--boat2-color) !important;
+}
+
+#boat3-panel .panel-header h2,
+.boat3-stat p {
+    color: var(--boat3-color) !important;
 }
 
 #winner-message {
     font-size: 1.2rem;
     font-weight: bold;
-    color: var(--brand-red);
-    white-space: pre-wrap;
+    color: var(--cream);
+    text-shadow: 0 0 5px var(--khaki);
+}
+
+/* --- Telemetry --- */
+.telemetry-panel {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    transition: grid-template-columns 0.3s ease-in-out;
 }
 
 .boat-details-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(4, 48.75%);
+    grid-template-rows: repeat(1, 1fr);
     gap: 10px;
+    height: 100%;
+    /* Make grid fill the panel body */
 }
 
 .rower-stats-card {
-    background: #2a2a2a;
-    border: 1px solid #444;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-sleek);
     border-radius: 4px;
     padding: 8px;
     font-size: 12px;
@@ -207,9 +480,29 @@ body {
 .rower-stats-card h4 {
     margin: 0 0 5px 0;
     font-size: 14px;
-    color: #e0e0e0;
+    color: var(--text-primary);
 }
 
 .rower-stats-card p {
     margin: 2px 0;
+    color: var(--text-secondary);
+}
+
+/* --- 2/3 BOAT MODE --- */
+.two-boats-mode .main-grid {
+    grid-template-areas:
+        "header header header"
+        "roster boat1 boat2"
+        "controls controls controls"
+        "visuals visuals visuals"
+        "telemetry telemetry telemetry";
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.two-boats-mode .telemetry-panel {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.two-boats-mode .boat-3-element {
+    display: none;
 }

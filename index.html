@@ -12,143 +12,167 @@
 </head>
 
 <body>
-    <div class="container-fluid my-4">
-        <header class="text-center mb-4">
-            <h1>McLean Crew Club Simulator</h1>
-            <p class="text-body-secondary">Build your boats and prove your speed.</p>
-        </header>
+    <div class="container-fluid p-4">
+        <main class="main-grid">
+            <header class="main-header text-center">
+                <h1>McLean Crew Club Simulator</h1>
+                <p class="text-body-secondary">Build your boats and prove your speed.</p>
+            </header>
 
-        <main>
-            <div class="row g-4 mb-4">
-                <div class="col-lg-3">
-                    <div class="card h-100">
-                        <div class="card-header">
-                            <h2 class="h5 mb-0">Rower Roster</h2>
-                        </div>
-                        <div class="card-body d-flex flex-column">
-                            <input type="text" id="roster-search" class="form-control mb-3"
-                                placeholder="Search rowers...">
-                            <div id="roster-list" class="flex-grow-1"></div>
-                        </div>
+            <div class="roster-panel">
+                <div class="panel-header">
+                    <h2 class="h5 mb-0">Rower Roster</h2>
+                </div>
+                <div class="panel-body d-flex flex-column">
+                    <input type="text" id="roster-search" class="form-control mb-3" placeholder="Search rowers...">
+                    <div id="roster-list" class="flex-grow-1"></div>
+                </div>
+            </div>
+
+            <div id="boat1-panel" class="boat-panel">
+                <div class="panel-header">
+                    <h2 id="boat1-name" class="h5 mb-0" contenteditable="true">Boat 1</h2>
+                    <div class="boat-avg-stats small text-body-secondary">
+                        <span id="boat1-avg-2k"></span>
+                        <span id="boat1-avg-weight" class="ms-2"></span>
                     </div>
                 </div>
+                <div class="panel-body">
+                    <div id="boat1-lineup" class="lineup"></div>
+                </div>
+            </div>
 
-                <div class="col-lg-9">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h2 class="h5 mb-0">Boat 1 <span id="boat1-avg-2k"
-                                            class="small text-body-secondary"></span><span id="boat1-avg-weight"
-                                            class="small text-body-secondary ms-2"></span></h2>
-                                </div>
-                                <div class="card-body">
-                                    <div id="boat1-lineup" class="lineup"></div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6 mt-4 mt-md-0">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h2 class="h5 mb-0">Boat 2 <span id="boat2-avg-2k"
-                                            class="small text-body-secondary"></span><span id="boat2-avg-weight"
-                                            class="small text-body-secondary ms-2"></span></h2>
-                                </div>
-                                <div class="card-body">
-                                    <div id="boat2-lineup" class="lineup"></div>
-                                </div>
-                            </div>
-                        </div>
+            <div id="boat2-panel" class="boat-panel">
+                <div class="panel-header">
+                    <h2 id="boat2-name" class="h5 mb-0" contenteditable="true">Boat 2</h2>
+                    <div class="boat-avg-stats small text-body-secondary">
+                        <span id="boat2-avg-2k"></span>
+                        <span id="boat2-avg-weight" class="ms-2"></span>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div id="boat2-lineup" class="lineup"></div>
+                </div>
+            </div>
+
+            <div id="boat3-panel" class="boat-panel boat-3-element">
+                <div class="panel-header">
+                    <h2 id="boat3-name" class="h5 mb-0" contenteditable="true">Boat 3</h2>
+                    <div class="boat-avg-stats small text-body-secondary">
+                        <span id="boat3-avg-2k"></span>
+                        <span id="boat3-avg-weight" class="ms-2"></span>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div id="boat3-lineup" class="lineup"></div>
+                </div>
+            </div>
+
+            <div class="race-controls-panel">
+                <div class="d-flex flex-wrap justify-content-center align-items-center gap-3">
+                    <button id="start-race" class="btn btn-danger">Start Race</button>
+                    <button id="rerace-btn" class="btn btn-danger d-none">Re-race</button>
+                    <button id="reset-boats" class="btn btn-secondary">Reset</button>
+                    <button id="autofill-boats" class="btn btn-outline-secondary">Autofill</button>
+                    <button id="set-lineups-btn" class="btn btn-outline-secondary">24/25 Lineups</button>
+                    <div class="control-group">
+                        <label for="boat-count-select" class="form-label mb-0">Boats</label>
+                        <select id="boat-count-select" class="form-select form-select-sm" style="width: auto;">
+                            <option value="2">2</option>
+                            <option value="3" selected>3</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="wind-slider" class="form-label mb-0">Conditions</label>
+                        <input type="range" id="wind-slider" class="form-range" min="-1" max="1" value="0" step="1">
+                        <span id="wind-label" class="badge">Normal</span>
+                    </div>
+                    <div class="control-group">
+                        <label for="speed-slider" class="form-label mb-0">Speed</label>
+                        <input type="range" id="speed-slider" class="form-range" min="1" max="8" value="1" step="1">
+                        <span id="speed-label" class="badge">1x</span>
                     </div>
                 </div>
             </div>
 
-            <div class="row justify-content-center text-center mb-4">
-                <div class="col-lg-10">
-                    <div class="card">
-                        <div class="card-body d-flex flex-wrap justify-content-center align-items-center gap-3">
-                            <button id="start-race" class="btn btn-danger">Start Race</button>
-                            <button id="rerace-btn" class="btn btn-danger d-none">Re-race</button>
-                            <button id="reset-boats" class="btn btn-secondary">Reset</button>
-                            <button id="autofill-boats" class="btn btn-outline-secondary">Autofill</button>
-                            <button id="set-lineups-btn" class="btn btn-outline-secondary">24/25 Lineups</button>
-                            <div class="control-group">
-                                <label for="wind-slider" class="form-label mb-0">Conditions</label>
-                                <input type="range" id="wind-slider" class="form-range" min="-1" max="1" value="0"
-                                    step="1">
-                                <span id="wind-label" class="badge text-bg-secondary">Normal</span>
-                            </div>
-                            <div class="control-group">
-                                <label for="speed-slider" class="form-label mb-0">Speed</label>
-                                <input type="range" id="speed-slider" class="form-range" min="1" max="8" value="1"
-                                    step="1">
-                                <span id="speed-label" class="badge text-bg-secondary">1x</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="race-section card mb-4">
-                <div class="card-header">
+            <div class="race-visuals-panel">
+                <div class="panel-header">
                     <h2 class="h5 mb-0">Race Course</h2>
                 </div>
-                <div class="card-body p-0">
+                <div class="panel-body p-0">
                     <canvas id="race-canvas"></canvas>
                 </div>
-                <div class="card-footer">
+                <div class="race-info-footer">
                     <div id="race-info">
                         <div class="race-stat"><strong>Time</strong>
                             <p id="race-timer">0:00.0</p>
                         </div>
-                        <div class="race-stat"><strong>Boat 1 Split</strong>
+
+                        <div class="race-stat boat1-stat"><strong>B1 Split</strong>
                             <p><span id="boat1-split">0:00.0</span>/500m</p>
                         </div>
-                        <div class="race-stat"><strong>Boat 1 Quality</strong>
+                        <div class="race-stat boat1-stat"><strong>B1 Quality</strong>
                             <p><span id="boat1-avg-quality">0.0</span> ★</p>
                         </div>
-                        <div class="race-stat"><strong>Boat 1 Rate</strong>
+                        <div class="race-stat boat1-stat"><strong>B1 Rate</strong>
                             <p><span id="boat1-rate">0</span> spm</p>
                         </div>
-                        <div class="race-stat"><strong>Boat 2 Split</strong>
+
+                        <div class="race-stat boat2-stat"><strong>B2 Split</strong>
                             <p><span id="boat2-split">0:00.0</span>/500m</p>
                         </div>
-                        <div class="race-stat"><strong>Boat 2 Quality</strong>
+                        <div class="race-stat boat2-stat"><strong>B2 Quality</strong>
                             <p><span id="boat2-avg-quality">0.0</span> ★</p>
                         </div>
-                        <div class="race-stat"><strong>Boat 2 Rate</strong>
+                        <div class="race-stat boat2-stat"><strong>B2 Rate</strong>
                             <p><span id="boat2-rate">0</span> spm</p>
+                        </div>
+
+                        <div class="race-stat boat3-stat boat-3-element"><strong>B3 Split</strong>
+                            <p><span id="boat3-split">0:00.0</span>/500m</p>
+                        </div>
+                        <div class="race-stat boat3-stat boat-3-element"><strong>B3 Quality</strong>
+                            <p><span id="boat3-avg-quality">0.0</span> ★</p>
+                        </div>
+                        <div class="race-stat boat3-stat boat-3-element"><strong>B3 Rate</strong>
+                            <p><span id="boat3-rate">0</span> spm</p>
                         </div>
                     </div>
                     <div id="winner-message" class="text-center mt-3"></div>
                 </div>
             </div>
 
-            <div id="telemetry-container" class="row g-4">
-                <div class="col-lg-6">
-                    <div class="boat-details card">
-                        <div class="card-header">
-                            <h3 class="h5 mb-0">Boat 1 Telemetry</h3>
-                        </div>
-                        <div class="card-body">
-                            <div id="boat1-details" class="boat-details-grid"></div>
-                        </div>
+            <div class="telemetry-panel">
+                <div class="boat-details">
+                    <div class="panel-header">
+                        <h3 class="h5 mb-0">Boat 1 Telemetry</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div id="boat1-details" class="boat-details-grid"></div>
                     </div>
                 </div>
-                <div class="col-lg-6">
-                    <div class="boat-details card">
-                        <div class="card-header">
-                            <h3 class="h5 mb-0">Boat 2 Telemetry</h3>
-                        </div>
-                        <div class="card-body">
-                            <div id="boat2-details" class="boat-details-grid"></div>
-                        </div>
+                <div class="boat-details">
+                    <div class="panel-header">
+                        <h3 class="h5 mb-0">Boat 2 Telemetry</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div id="boat2-details" class="boat-details-grid"></div>
+                    </div>
+                </div>
+                <div class="boat-details boat-3-element">
+                    <div class="panel-header">
+                        <h3 class="h5 mb-0">Boat 3 Telemetry</h3>
+                    </div>
+                    <div class="panel-body">
+                        <div id="boat3-details" class="boat-details-grid"></div>
                     </div>
                 </div>
             </div>
 
         </main>
     </div>
+
+    <div id="roster-card-popup"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">

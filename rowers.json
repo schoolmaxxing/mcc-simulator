@@ -1,11 +1,12 @@
 [{
         "name": "Carson Fast",
         "2k": "6:33.6",
+        "rarity": "Mythic",
         "technique": {
             "port": 4.3,
             "starboard": 3.1
         },
-        "mentality": 4.8,
+        "mentality": 4.3,
         "weight": 168.3,
         "following": 4.6,
         "best_rate": 36
@@ -13,11 +14,12 @@
     {
         "name": "Sam Peale",
         "2k": "6:28.9",
+        "rarity": "Mythic",
         "technique": {
             "port": 4.4,
             "starboard": 4.6
         },
-        "mentality": 4.2,
+        "mentality": 3.8,
         "weight": 162.4,
         "following": 4.2,
         "best_rate": 36
@@ -25,11 +27,12 @@
     {
         "name": "Jack Kirk",
         "2k": "6:39.7",
+        "rarity": "Rare",
         "technique": {
             "port": 4.0,
             "starboard": 4.1
         },
-        "mentality": 4.7,
+        "mentality": 4.1,
         "weight": 179.6,
         "following": 4.4,
         "best_rate": 36
@@ -37,11 +40,12 @@
     {
         "name": "Gunnar Westland",
         "2k": "6:31.9",
+        "rarity": "Mythic",
         "technique": {
             "port": 4.6,
             "starboard": 4.7
         },
-        "mentality": 4.7,
+        "mentality": 4.2,
         "weight": 166.8,
         "following": 4.8,
         "best_rate": 36
@@ -49,11 +53,12 @@
     {
         "name": "Henry Terrell",
         "2k": "6:37.2",
+        "rarity": "Rare",
         "technique": {
             "port": 3.9,
             "starboard": 3.2
         },
-        "mentality": 4.0,
+        "mentality": 3.4,
         "weight": 200.0,
         "following": 4.8,
         "best_rate": 33
@@ -61,11 +66,12 @@
     {
         "name": "Matthew Matar",
         "2k": "6:38.1",
+        "rarity": "Rare",
         "technique": {
             "port": 2.0,
             "starboard": 4.1
         },
-        "mentality": 3.9,
+        "mentality": 3.5,
         "weight": 190.5,
         "following": 4.4,
         "best_rate": 36
@@ -73,11 +79,12 @@
     {
         "name": "Alex Barnes",
         "2k": "6:57.4",
+        "rarity": "Uncommon",
         "technique": {
             "port": 4.4,
             "starboard": 2.5
         },
-        "mentality": 4.1,
+        "mentality": 3.3,
         "weight": 145.0,
         "following": 5.0,
         "best_rate": 36
@@ -85,6 +92,7 @@
     {
         "name": "Andrew Egorin",
         "2k": "6:46.1",
+        "rarity": "Rare",
         "technique": {
             "port": 4.2,
             "starboard": 4.3
@@ -97,11 +105,12 @@
     {
         "name": "Holden Saunders",
         "2k": "7:11.0",
+        "rarity": "Common",
         "technique": {
             "port": 3.9,
             "starboard": 4.0
         },
-        "mentality": 4.4,
+        "mentality": 3.8,
         "weight": 133.6,
         "following": 4.7,
         "best_rate": 36
@@ -109,11 +118,12 @@
     {
         "name": "Finnegan Switzer",
         "2k": "7:10.6",
+        "rarity": "Common",
         "technique": {
             "port": 3.3,
             "starboard": 3.9
         },
-        "mentality": 4.5,
+        "mentality": 3.9,
         "weight": 151.0,
         "following": 3.6,
         "best_rate": 36
@@ -121,11 +131,12 @@
     {
         "name": "Adrian Wiklund",
         "2k": "6:45.9",
+        "rarity": "Uncommon",
         "technique": {
             "port": 3.4,
             "starboard": 2.3
         },
-        "mentality": 4.1,
+        "mentality": 3.6,
         "weight": 195.6,
         "following": 3.8,
         "best_rate": 35
@@ -133,11 +144,12 @@
     {
         "name": "James Milward",
         "2k": "7:09.6",
+        "rarity": "Common",
         "technique": {
             "port": 2.4,
             "starboard": 3.2
         },
-        "mentality": 3.9,
+        "mentality": 3.3,
         "weight": 138.7,
         "following": 3.7,
         "best_rate": 36
@@ -145,11 +157,12 @@
     {
         "name": "Sean Noh",
         "2k": "6:59.2",
+        "rarity": "Uncommon",
         "technique": {
             "port": 3.6,
             "starboard": 2.7
         },
-        "mentality": 4.5,
+        "mentality": 3.9,
         "weight": 153.2,
         "following": 3.7,
         "best_rate": 36
@@ -157,11 +170,12 @@
     {
         "name": "Owen Kelly",
         "2k": "7:22.1",
+        "rarity": "Common",
         "technique": {
             "port": 1.9,
             "starboard": 3.1
         },
-        "mentality": 4.2,
+        "mentality": 3.4,
         "weight": 136.7,
         "following": 3.3,
         "best_rate": 34
@@ -169,11 +183,12 @@
     {
         "name": "Minh Tran",
         "2k": "6:52.6",
+        "rarity": "Uncommon",
         "technique": {
             "port": 3.6,
             "starboard": 2.1
         },
-        "mentality": 4.1,
+        "mentality": 3.6,
         "weight": 151.0,
         "following": 4.3,
         "best_rate": 36
@@ -181,11 +196,12 @@
     {
         "name": "Arham Jain",
         "2k": "7:19.2",
+        "rarity": "Common",
         "technique": {
             "port": 2.7,
             "starboard": 3.7
         },
-        "mentality": 2.7,
+        "mentality": 2.1,
         "weight": 123.4,
         "following": 4.7,
         "best_rate": 36
@@ -193,11 +209,12 @@
     {
         "name": "Mickey Bekele",
         "2k": "7:35.6",
+        "rarity": "Common",
         "technique": {
             "port": 2.7,
             "starboard": 3.8
         },
-        "mentality": 3.9,
+        "mentality": 3.3,
         "weight": 132.0,
         "following": 4.3,
         "best_rate": 36
