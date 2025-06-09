@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Boat Elements (Grouped)
     const boatNames = [document.getElementById('boat1-name'), document.getElementById('boat2-name'), document.getElementById('boat3-name')];
+    const telemetryBoatNames = [document.getElementById('boat1-telemetry-name'), document.getElementById('boat2-telemetry-name'), document.getElementById('boat3-telemetry-name')];
     const boatLineups = [document.getElementById('boat1-lineup'), document.getElementById('boat2-lineup'), document.getElementById('boat3-lineup')];
     const boatAvg2kEls = [document.getElementById('boat1-avg-2k'), document.getElementById('boat2-avg-2k'), document.getElementById('boat3-avg-2k')];
     const boatAvgWeightEls = [document.getElementById('boat1-avg-weight'), document.getElementById('boat2-avg-weight'), document.getElementById('boat3-avg-weight')];
@@ -65,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
         resetAllBoatStates();
         setCanvasSize();
         setupContentEditableListeners();
+        updateTelemetryHeaders();
         window.addEventListener('resize', setCanvasSize);
     }
 
@@ -97,9 +99,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
         updateAllRowerDetailsUI();
     }
-    
+
+    function updateTelemetryHeaders() {
+        boatNames.forEach((nameEl, index) => {
+            const currentName = nameEl.textContent.trim() || `Boat ${index + 1}`;
+            telemetryBoatNames[index].textContent = `${currentName} Telemetry`;
+        });
+    }
+
     function setupContentEditableListeners() {
         boatNames.forEach(nameEl => {
+            nameEl.addEventListener('input', updateTelemetryHeaders);
+
             // Sanitize input on paste
             nameEl.addEventListener('paste', (e) => {
                 e.preventDefault();
@@ -204,7 +215,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     <h4>${rower.name}</h4>
                     <p class="rarity-text">${rarityName}</p> 
                 </div>
-                <span class="rower-2k">${rower['2k']}</span>
+                <div class="popup-header-right">
+                    <span class="rower-2k">${rower['2k']}</span>
+                    <span class="rower-grad-year">Class of ${rower.graduation_year}</span>
+                </div>
             </div>
             <div class="popup-divider"></div>
             <div class="popup-stats-grid">
@@ -470,6 +484,13 @@ document.addEventListener('DOMContentLoaded', () => {
         boat2Data = Array(8).fill(null);
         boat3Data = Array(8).fill(null);
         allBoatData = [boat1Data, boat2Data, boat3Data];
+        
+        boatNames.forEach((el, i) => {
+            el.textContent = `Boat ${i + 1}`;
+            el.setAttribute('contenteditable', 'true');
+        });
+        updateTelemetryHeaders();
+
         setupAllBoatLineups();
         resetAllBoatStates();
         raceTime = 0;
@@ -488,7 +509,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setLineupsBtn.disabled = false;
         windSlider.disabled = false;
         boatCountSelect.disabled = false;
-        boatNames.forEach(el => el.setAttribute('contenteditable', 'true'));
         drawInitialCanvas();
     }
 

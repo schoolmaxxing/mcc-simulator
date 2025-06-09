@@ -226,7 +226,7 @@ h2[contenteditable="true"]:focus {
 #roster-card-popup {
     display: none;
     position: absolute;
-    width: 260px;
+    width: 280px;
     background: radial-gradient(ellipse at bottom, #1a2c2c 0%, var(--bg-secondary) 70%);
     border: 2px solid;
     /* Updated border */
@@ -288,7 +288,7 @@ h2[contenteditable="true"]:focus {
 .popup-header {
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: flex-start;
     margin-bottom: 0.75rem;
 }
 
@@ -299,10 +299,22 @@ h2[contenteditable="true"]:focus {
     font-weight: 700;
 }
 
+.popup-header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+}
+
 .popup-header .rower-2k {
     font-size: 1.1rem;
     color: var(--khaki);
     font-weight: 600;
+}
+
+.popup-header .rower-grad-year {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: -2px;
 }
 
 .popup-divider {

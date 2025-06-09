@@ -6,10 +6,11 @@
             "port": 4.3,
             "starboard": 3.1
         },
-        "mentality": 4.3,
+        "mentality": 4.8,
         "weight": 168.3,
         "following": 4.6,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2025
     },
     {
         "name": "Sam Peale",
@@ -19,10 +20,11 @@
             "port": 4.4,
             "starboard": 4.6
         },
-        "mentality": 3.8,
+        "mentality": 4.2,
         "weight": 162.4,
         "following": 4.2,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2025
     },
     {
         "name": "Jack Kirk",
@@ -32,10 +34,11 @@
             "port": 4.0,
             "starboard": 4.1
         },
-        "mentality": 4.1,
+        "mentality": 4.7,
         "weight": 179.6,
         "following": 4.4,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2025
     },
     {
         "name": "Gunnar Westland",
@@ -45,10 +48,11 @@
             "port": 4.6,
             "starboard": 4.7
         },
-        "mentality": 4.2,
+        "mentality": 4.7,
         "weight": 166.8,
         "following": 4.8,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2025
     },
     {
         "name": "Henry Terrell",
@@ -58,10 +62,11 @@
             "port": 3.9,
             "starboard": 3.2
         },
-        "mentality": 3.4,
+        "mentality": 4.0,
         "weight": 200.0,
         "following": 4.8,
-        "best_rate": 33
+        "best_rate": 33,
+        "graduation_year": 2025
     },
     {
         "name": "Matthew Matar",
@@ -71,10 +76,11 @@
             "port": 2.0,
             "starboard": 4.1
         },
-        "mentality": 3.5,
+        "mentality": 3.9,
         "weight": 190.5,
         "following": 4.4,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2026
     },
     {
         "name": "Alex Barnes",
@@ -84,10 +90,11 @@
             "port": 4.4,
             "starboard": 2.5
         },
-        "mentality": 3.3,
+        "mentality": 4.1,
         "weight": 145.0,
         "following": 5.0,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2025
     },
     {
         "name": "Andrew Egorin",
@@ -100,7 +107,8 @@
         "mentality": 5.0,
         "weight": 155.6,
         "following": 5.0,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2026
     },
     {
         "name": "Holden Saunders",
@@ -110,10 +118,11 @@
             "port": 3.9,
             "starboard": 4.0
         },
-        "mentality": 3.8,
+        "mentality": 4.4,
         "weight": 133.6,
         "following": 4.7,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2027
     },
     {
         "name": "Finnegan Switzer",
@@ -123,10 +132,11 @@
             "port": 3.3,
             "starboard": 3.9
         },
-        "mentality": 3.9,
+        "mentality": 4.5,
         "weight": 151.0,
         "following": 3.6,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2026
     },
     {
         "name": "Adrian Wiklund",
@@ -136,10 +146,11 @@
             "port": 3.4,
             "starboard": 2.3
         },
-        "mentality": 3.6,
+        "mentality": 4.1,
         "weight": 195.6,
         "following": 3.8,
-        "best_rate": 35
+        "best_rate": 35,
+        "graduation_year": 2025
     },
     {
         "name": "James Milward",
@@ -149,10 +160,11 @@
             "port": 2.4,
             "starboard": 3.2
         },
-        "mentality": 3.3,
+        "mentality": 3.9,
         "weight": 138.7,
         "following": 3.7,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2026
     },
     {
         "name": "Sean Noh",
@@ -162,10 +174,11 @@
             "port": 3.6,
             "starboard": 2.7
         },
-        "mentality": 3.9,
+        "mentality": 4.5,
         "weight": 153.2,
         "following": 3.7,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2027
     },
     {
         "name": "Owen Kelly",
@@ -175,10 +188,11 @@
             "port": 1.9,
             "starboard": 3.1
         },
-        "mentality": 3.4,
+        "mentality": 4.2,
         "weight": 136.7,
         "following": 3.3,
-        "best_rate": 34
+        "best_rate": 34,
+        "graduation_year": 2027
     },
     {
         "name": "Minh Tran",
@@ -188,10 +202,11 @@
             "port": 3.6,
             "starboard": 2.1
         },
-        "mentality": 3.6,
+        "mentality": 4.1,
         "weight": 151.0,
         "following": 4.3,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2026
     },
     {
         "name": "Arham Jain",
@@ -201,10 +216,11 @@
             "port": 2.7,
             "starboard": 3.7
         },
-        "mentality": 2.1,
+        "mentality": 2.7,
         "weight": 123.4,
         "following": 4.7,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2025
     },
     {
         "name": "Mickey Bekele",
@@ -214,9 +230,10 @@
             "port": 2.7,
             "starboard": 3.8
         },
-        "mentality": 3.3,
+        "mentality": 3.9,
         "weight": 132.0,
         "following": 4.3,
-        "best_rate": 36
+        "best_rate": 36,
+        "graduation_year": 2027
     }
 ]
