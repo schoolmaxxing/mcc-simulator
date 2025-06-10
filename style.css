@@ -56,15 +56,15 @@ h5,
 /* --- MAIN LAYOUT GRID --- */
 .main-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     grid-template-rows: auto auto 1fr auto;
     gap: 1rem;
     grid-template-areas:
-        "header header header header"
-        "roster boat1 boat2 boat3"
-        "controls controls controls controls"
-        "visuals visuals visuals visuals"
-        "telemetry telemetry telemetry telemetry";
+        "header header header header header"
+        "roster cox boat1 boat2 boat3"
+        "controls controls controls controls controls"
+        "visuals visuals visuals visuals visuals"
+        "telemetry telemetry telemetry telemetry telemetry";
     transition: grid-template-columns 0.3s ease-in-out;
 }
 
@@ -74,6 +74,10 @@ h5,
 
 .roster-panel {
     grid-area: roster;
+}
+
+.coxswain-panel {
+    grid-area: cox;
 }
 
 #boat1-panel {
@@ -107,6 +111,7 @@ h5,
 
 /* --- CUSTOM PANEL STYLES --- */
 .roster-panel,
+.coxswain-panel,
 .boat-panel,
 .race-visuals-panel,
 .boat-details {
@@ -143,7 +148,8 @@ h5,
     box-shadow: 0 0 0 0.25rem rgba(165, 36, 34, 0.25);
 }
 
-#roster-list {
+#roster-list,
+#coxswain-list {
     display: flex;
     flex-direction: column;
     gap: 10px;
@@ -152,7 +158,8 @@ h5,
     padding-right: 10px;
 }
 
-.roster-card {
+.roster-card,
+.coxswain-card {
     padding: 10px;
     border-radius: 5px;
     cursor: grab;
@@ -164,16 +171,42 @@ h5,
     transition: all 0.2s;
 }
 
-.roster-card:hover {
+.roster-card:hover,
+.coxswain-card:hover {
     color: var(--cream);
     border-color: var(--auburn);
 }
 
-.roster-card.dragging {
+.roster-card.dragging,
+.coxswain-card.dragging {
     opacity: 0.5;
     cursor: grabbing;
 }
 
+/* Coxswain specifics */
+.coxswain-card {
+    background-color: var(--bg-tertiary);
+    border: 1px dashed var(--border-sleek);
+}
+
+.coxswain-slot {
+    margin-bottom: 10px;
+    background-color: rgba(165, 36, 34, 0.1);
+    border: 1px dashed var(--border-sleek);
+    border-radius: 5px;
+    padding: 10px;
+}
+
+.coxswain-slot.has-coxswain {
+    border-style: solid;
+}
+
+.coxswain-slot-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
 
 /* Boat Lineups */
 .lineup .list-group-item {
@@ -182,12 +215,14 @@ h5,
     color: var(--text-secondary);
 }
 
-.seat.drag-over {
+.seat.drag-over,
+.coxswain-slot.drag-over {
     background-color: var(--auburn);
     border-color: var(--brand-red-hover);
 }
 
-.seat .roster-card {
+.seat .roster-card,
+.coxswain-slot .coxswain-card {
     width: 75%;
     cursor: default;
     border: none;
@@ -195,17 +230,20 @@ h5,
     font-size: 0.9rem;
 }
 
-#boat1-panel .seat .roster-card {
+#boat1-panel .seat .roster-card,
+#boat1-panel .coxswain-slot .coxswain-card {
     background-color: var(--boat1-color);
     color: var(--cream);
 }
 
-#boat2-panel .seat .roster-card {
+#boat2-panel .seat .roster-card,
+#boat2-panel .coxswain-slot .coxswain-card {
     background-color: var(--boat2-color);
     color: #000;
 }
 
-#boat3-panel .seat .roster-card {
+#boat3-panel .seat .roster-card,
+#boat3-panel .coxswain-slot .coxswain-card {
     background-color: var(--boat3-color);
     color: #000;
 }
@@ -552,15 +590,51 @@ h2[contenteditable="true"]:focus {
     color: var(--text-secondary);
 }
 
+.coxswain-stats-card {
+    background: rgba(165, 36, 34, 0.1);
+    border: 1px solid var(--border-sleek);
+    border-radius: 4px;
+    padding: 8px;
+    font-size: 12px;
+    grid-column: span 2;
+    margin-bottom: 10px;
+}
+
+.coxswain-stats-card h4 {
+    margin: 0 0 5px 0;
+    font-size: 14px;
+    color: var(--text-primary);
+}
+
+.coxswain-stats-card p {
+    margin: 2px 0;
+    color: var(--text-secondary);
+}
+
+.power10-indicator {
+    position: absolute;
+    top: 5px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(165, 36, 34, 0.8);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+    display: none;
+    z-index: 10;
+}
+
 /* --- 2/3 BOAT MODE --- */
 .two-boats-mode .main-grid {
     grid-template-areas:
-        "header header header"
-        "roster boat1 boat2"
-        "controls controls controls"
-        "visuals visuals visuals"
-        "telemetry telemetry telemetry";
-    grid-template-columns: repeat(3, 1fr);
+        "header header header header"
+        "roster cox boat1 boat2"
+        "controls controls controls controls"
+        "visuals visuals visuals visuals"
+        "telemetry telemetry telemetry telemetry";
+    grid-template-columns: repeat(4, 1fr);
 }
 
 .two-boats-mode .telemetry-panel {

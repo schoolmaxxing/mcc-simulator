@@ -1,0 +1,19 @@
+[{
+        "name": "Charlie Murphy",
+        "rarity": "Legendary",
+        "motivation": 4.8,
+        "strategy": 4.5,
+        "tech_calls": 4.7,
+        "steering": 4.9,
+        "graduation_year": 2025
+    },
+    {
+        "name": "Alexander Tran",
+        "rarity": "Mythic",
+        "motivation": 4.4,
+        "strategy": 4.2,
+        "tech_calls": 4.3,
+        "steering": 3.8,
+        "graduation_year": 2027
+    }
+]

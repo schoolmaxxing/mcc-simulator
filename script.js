@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // DOM Elements
     const mainGrid = document.querySelector('.main-grid');
     const rosterList = document.getElementById('roster-list');
+    const coxswainList = document.getElementById('coxswain-list');
     const rosterSearch = document.getElementById('roster-search');
     const rosterCardPopup = document.getElementById('roster-card-popup');
     const telemetryPanel = document.querySelector('.telemetry-panel');
@@ -38,17 +39,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Game State
     let allRowers = [];
+    let allCoxswains = [];
     let predefinedLineups = [];
     let boat1Data = Array(8).fill(null);
     let boat2Data = Array(8).fill(null);
     let boat3Data = Array(8).fill(null);
+    let boat1Coxswain = null;
+    let boat2Coxswain = null;
+    let boat3Coxswain = null;
     let allBoatData = [boat1Data, boat2Data, boat3Data];
+    let allBoatCoxswains = [boat1Coxswain, boat2Coxswain, boat3Coxswain];
     let selectedBoatIndex = 0; // For the lineup library modal
 
     let raceAnimationId;
     let raceSpeedMultiplier = 1;
     let windCondition = 0;
-    let numberOfBoats = 2;
+    let numberOfBoats = 2; // Changed default to 2
     let lastFrameTime = 0;
     let raceTime = 0;
     let boat1State = {};
@@ -62,9 +68,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- INITIALIZATION ---
     Promise.all([
         fetch('rowers.json').then(response => response.json()),
+        fetch('coxswains.json').then(response => response.json()),
         fetch('lineups.json').then(response => response.json())
-    ]).then(([rowerData, lineupData]) => {
+    ]).then(([rowerData, coxswainData, lineupData]) => {
         allRowers = rowerData;
+        allCoxswains = coxswainData;
         predefinedLineups = lineupData;
         initialize();
     }).catch(error => {
@@ -73,6 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initialize() {
         renderRosterList();
+        renderCoxswainList();
         setupAllBoatLineups();
         resetAllBoatStates();
         setCanvasSize();
@@ -80,7 +89,10 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTelemetryHeaders();
         setupLineupLibraryButtons();
         window.addEventListener('resize', setCanvasSize);
+        
+        // Add two-boats-mode class to body since default is now 2 boats
         document.body.classList.add('two-boats-mode');
+        
         // Initialize Bootstrap modal
         lineupModal = new bootstrap.Modal(lineupLibraryModal);
     }
@@ -90,9 +102,9 @@ document.addEventListener('DOMContentLoaded', () => {
         lineupLibraryBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 selectedBoatIndex = parseInt(e.currentTarget.dataset.boat) - 1;
-                document.getElementById('lineupLibraryModalLabel').textContent =
+                document.getElementById('lineupLibraryModalLabel').textContent = 
                     `Select Lineup for ${boatNames[selectedBoatIndex].textContent}`;
-
+                
                 // Generate lineup options from the predefined lineups
                 lineupOptionsContainer.innerHTML = '';
                 predefinedLineups.forEach((lineup, index) => {
@@ -100,43 +112,50 @@ document.addEventListener('DOMContentLoaded', () => {
                     option.type = 'button';
                     option.className = 'list-group-item list-group-item-action bg-dark text-light';
                     option.dataset.lineupIndex = index;
-
+                    
                     // Get last names only
                     const lastNames = lineup.rowers.map(fullName => {
                         const nameParts = fullName.split(' ');
                         return nameParts[nameParts.length - 1]; // Get the last part of the name
                     });
-
+                    
                     // Create summary of rowers for display with last names only
                     const rowerSummary = lastNames.join(', ');
-
+                    
+                    // Get coxswain last name
+                    const coxswainName = lineup.coxswain ? lineup.coxswain.split(' ').pop() : 'None';
+                    
                     option.innerHTML = `
-                    <strong>${lineup.name}</strong>
-                    <small class="d-block text-secondary">${rowerSummary}</small>
-                `;
-
+                        <strong>${lineup.name}</strong>
+                        <small class="d-block text-secondary">Cox: ${coxswainName} | ${rowerSummary}</small>
+                    `;
+                    
                     option.addEventListener('click', () => applyLineup(index));
-
+                    
                     lineupOptionsContainer.appendChild(option);
                 });
-
+                
                 lineupModal.show();
             });
         });
     }
-
+    
     function applyLineup(lineupIndex) {
         const lineup = predefinedLineups[lineupIndex];
-
+        
         if (lineup) {
             // Set the rowers in the boat
-            allBoatData[selectedBoatIndex] = lineup.rowers.map(name =>
+            allBoatData[selectedBoatIndex] = lineup.rowers.map(name => 
                 allRowers.find(rower => rower.name === name) || null
             );
-
+            
+            // Set the coxswain in the boat
+            allBoatCoxswains[selectedBoatIndex] = lineup.coxswain ? 
+                allCoxswains.find(cox => cox.name === lineup.coxswain) || null : null;
+            
             // Set the boat name to match the lineup name
             boatNames[selectedBoatIndex].textContent = lineup.name;
-
+            
             // Update UI
             setupAllBoatLineups();
             updateTelemetryHeaders();
@@ -160,11 +179,24 @@ document.addEventListener('DOMContentLoaded', () => {
             strokeRate: 0,
             racePhase: 'start',
             strokeCount: 0,
+            power10Active: false,
+            power10StartTime: 0,
+            power10Cooldown: false,
+            steeringOffset: 0,
+            steeringDirection: 1,
+            steeringChange: 0,
             rowerStats: Array(8).fill({
                 name: 'Empty',
                 watts: 0,
                 quality: 0
             }),
+            coxswainStats: {
+                name: 'None',
+                motivationBoost: 0,
+                strategyTiming: 0,
+                techCallBoost: 0,
+                steeringQuality: 3
+            },
             puddles: [],
             splashes: [],
             justCaught: false,
@@ -211,13 +243,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = createRowerCard(rower);
             card.draggable = true;
             card.addEventListener('dragstart', e => {
-                hideRowerCardPopup();
+                hideRosterCardPopup();
                 e.dataTransfer.setData('text/plain', e.target.dataset.rowerName);
+                e.dataTransfer.setData('cardType', 'rower');
                 setTimeout(() => e.target.classList.add('dragging'), 0);
             });
             card.addEventListener('dragend', e => e.target.classList.remove('dragging'));
             card.addEventListener('mouseover', (event) => showRowerCardPopup(event, rower));
-            card.addEventListener('mouseout', hideRowerCardPopup);
+            card.addEventListener('mouseout', hideRosterCardPopup);
             card.addEventListener('mousemove', (event) => {
                 rosterCardPopup.style.left = `${event.pageX + 20}px`;
                 rosterCardPopup.style.top = `${event.pageY + 20}px`;
@@ -226,10 +259,56 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function renderCoxswainList() {
+        coxswainList.innerHTML = '';
+        
+        allCoxswains.forEach(coxswain => {
+            const card = createCoxswainCard(coxswain);
+            card.draggable = true;
+            card.addEventListener('dragstart', e => {
+                hideRosterCardPopup();
+                e.dataTransfer.setData('text/plain', e.target.dataset.coxswainName);
+                e.dataTransfer.setData('cardType', 'coxswain');
+                setTimeout(() => e.target.classList.add('dragging'), 0);
+            });
+            card.addEventListener('dragend', e => e.target.classList.remove('dragging'));
+            card.addEventListener('mouseover', (event) => showCoxswainCardPopup(event, coxswain));
+            card.addEventListener('mouseout', hideRosterCardPopup);
+            card.addEventListener('mousemove', (event) => {
+                rosterCardPopup.style.left = `${event.pageX + 20}px`;
+                rosterCardPopup.style.top = `${event.pageY + 20}px`;
+            });
+            coxswainList.appendChild(card);
+        });
+    }
+
     function setupAllBoatLineups() {
         allBoatData.forEach((boatData, boatIndex) => {
             const lineupEl = boatLineups[boatIndex];
             lineupEl.innerHTML = '';
+            
+            // Create coxswain slot
+            const coxswainSlot = document.createElement('div');
+            coxswainSlot.className = 'coxswain-slot d-flex justify-content-between align-items-center';
+            coxswainSlot.dataset.boat = boatIndex + 1;
+            
+            const coxswainLabel = document.createElement('span');
+            coxswainLabel.className = 'coxswain-slot-label';
+            coxswainLabel.textContent = 'Coxswain';
+            coxswainSlot.appendChild(coxswainLabel);
+            
+            const coxswain = allBoatCoxswains[boatIndex];
+            if (coxswain) {
+                coxswainSlot.classList.add('has-coxswain');
+                coxswainSlot.appendChild(createCoxswainCard(coxswain));
+            }
+            
+            lineupEl.appendChild(coxswainSlot);
+            
+            // Add coxswain slot listeners
+            addCoxswainSlotListeners(coxswainSlot);
+            
+            // Create rower slots
             const listGroup = document.createElement('ul');
             listGroup.className = 'list-group';
             for (let i = 0; i < 8; i++) {
@@ -253,6 +332,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         document.querySelectorAll('.seat').forEach(seat => addSeatListeners(seat));
         updateAllBoatHeaderStats();
+        updateCoxswainStats();
     }
 
     function updateAllBoatHeaderStats() {
@@ -272,11 +352,42 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function updateCoxswainStats() {
+        allBoatStates.forEach((state, index) => {
+            const coxswain = allBoatCoxswains[index];
+            if (coxswain) {
+                state.coxswainStats = {
+                    name: coxswain.name,
+                    motivationBoost: coxswain.motivation * 0.02, // 2% boost per star
+                    strategyTiming: coxswain.strategy,
+                    techCallBoost: coxswain.tech_calls * 0.05, // 0.25 quality points per star
+                    steeringQuality: coxswain.steering
+                };
+            } else {
+                state.coxswainStats = {
+                    name: 'None',
+                    motivationBoost: 0,
+                    strategyTiming: 0,
+                    techCallBoost: 0,
+                    steeringQuality: 3
+                };
+            }
+        });
+    }
+
     function createRowerCard(rower) {
         const card = document.createElement('div');
         card.className = 'roster-card';
         card.dataset.rowerName = rower.name;
         card.textContent = rower.name;
+        return card;
+    }
+
+    function createCoxswainCard(coxswain) {
+        const card = document.createElement('div');
+        card.className = 'coxswain-card';
+        card.dataset.coxswainName = coxswain.name;
+        card.textContent = coxswain.name;
         return card;
     }
 
@@ -327,19 +438,64 @@ document.addEventListener('DOMContentLoaded', () => {
         rosterCardPopup.style.display = 'block';
     }
 
-    function hideRowerCardPopup() {
+    function showCoxswainCardPopup(event, coxswain) {
+        const rarityName = coxswain.rarity || 'Common';
+        rosterCardPopup.className = `rarity-${rarityName}`; // Set class for border color
+        rosterCardPopup.innerHTML = `
+            <div class="popup-header">
+                <div class="popup-name-section">
+                    <h4>${coxswain.name}</h4>
+                    <p class="rarity-text">${rarityName}</p> 
+                </div>
+                <div class="popup-header-right">
+                    <span class="rower-grad-year">Class of ${coxswain.graduation_year}</span>
+                </div>
+            </div>
+            <div class="popup-divider"></div>
+            <div class="popup-stats-grid">
+                <div class="popup-stat">
+                    <span class="stat-label">Motivation</span>
+                    <span class="stat-value">${coxswain.motivation.toFixed(1)} ★</span>
+                </div>
+                <div class="popup-stat">
+                    <span class="stat-label">Strategy</span>
+                    <span class="stat-value">${coxswain.strategy.toFixed(1)} ★</span>
+                </div>
+                <div class="popup-stat">
+                    <span class="stat-label">Tech Calls</span>
+                    <span class="stat-value">${coxswain.tech_calls.toFixed(1)} ★</span>
+                </div>
+                <div class="popup-stat">
+                    <span class="stat-label">Steering</span>
+                    <span class="stat-value">${coxswain.steering.toFixed(1)} ★</span>
+                </div>
+            </div>
+        `;
+        rosterCardPopup.style.left = `${event.pageX + 20}px`;
+        rosterCardPopup.style.top = `${event.pageY + 20}px`;
+        rosterCardPopup.style.display = 'block';
+    }
+
+    function hideRosterCardPopup() {
         rosterCardPopup.style.display = 'none';
     }
 
     function addSeatListeners(seat) {
         seat.addEventListener('dragover', e => {
             e.preventDefault();
-            seat.classList.add('drag-over');
+            const cardType = e.dataTransfer.getData('cardType');
+            if (cardType === 'rower' || cardType === '') {
+                seat.classList.add('drag-over');
+            }
         });
         seat.addEventListener('dragleave', () => seat.classList.remove('drag-over'));
         seat.addEventListener('drop', e => {
             e.preventDefault();
             seat.classList.remove('drag-over');
+            const cardType = e.dataTransfer.getData('cardType');
+            
+            if (cardType === 'coxswain') return; // Don't allow coxswains in rower seats
+            
             const rowerName = e.dataTransfer.getData('text/plain');
             const rower = allRowers.find(r => r.name === rowerName);
             if (!rower) return;
@@ -353,10 +509,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    function addCoxswainSlotListeners(slot) {
+        slot.addEventListener('dragover', e => {
+            e.preventDefault();
+            const cardType = e.dataTransfer.getData('cardType');
+            if (cardType === 'coxswain' || cardType === '') {
+                slot.classList.add('drag-over');
+            }
+        });
+        slot.addEventListener('dragleave', () => slot.classList.remove('drag-over'));
+        slot.addEventListener('drop', e => {
+            e.preventDefault();
+            slot.classList.remove('drag-over');
+            const cardType = e.dataTransfer.getData('cardType');
+            
+            if (cardType === 'rower') return; // Don't allow rowers in coxswain slot
+            
+            const coxswainName = e.dataTransfer.getData('text/plain');
+            const coxswain = allCoxswains.find(c => c.name === coxswainName);
+            if (!coxswain) return;
+
+            const boatNum = parseInt(slot.dataset.boat);
+            allBoatCoxswains[boatNum - 1] = coxswain;
+
+            setupAllBoatLineups();
+        });
+    }
+
     function autofillBoats() {
         const boatLineups = allBoatData.slice(0, numberOfBoats);
+        const boatCoxswains = allBoatCoxswains.slice(0, numberOfBoats);
 
-        boatLineups.forEach(lineup => {
+        // First, assign coxswains if needed
+        for (let i = 0; i < numberOfBoats; i++) {
+            if (!boatCoxswains[i]) {
+                const availableCoxswains = allCoxswains.filter(cox => 
+                    !boatCoxswains.includes(cox));
+                if (availableCoxswains.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * availableCoxswains.length);
+                    boatCoxswains[i] = availableCoxswains[randomIndex];
+                }
+            }
+        }
+
+        // Then assign rowers
+        boatLineups.forEach((lineup, boatIndex) => {
             const placedInThisBoat = new Set(lineup.filter(r => r).map(r => r.name));
             let availableForThisBoat = allRowers.filter(r => !placedInThisBoat.has(r.name));
 
@@ -385,12 +582,20 @@ document.addEventListener('DOMContentLoaded', () => {
         resetBoats();
     }
 
-
     // --- RACE LOGIC ---
     function startRace() {
         const boatsToRace = allBoatData.slice(0, numberOfBoats);
+        const coxswainsToRace = allBoatCoxswains.slice(0, numberOfBoats);
+        
+        // Check if all boats have rowers
         if (boatsToRace.some(boat => boat.some(r => r === null))) {
             alert(`All ${numberOfBoats} boats must be full (8 rowers) to start the race.`);
+            return;
+        }
+        
+        // Check if all boats have coxswains
+        if (coxswainsToRace.some(cox => cox === null)) {
+            alert(`All ${numberOfBoats} boats must have a coxswain to start the race.`);
             return;
         }
 
@@ -406,6 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
         winnerMessageEl.textContent = '';
         raceTime = 0;
         resetAllBoatStates();
+        updateCoxswainStats();
 
         lastFrameTime = 0;
         raceAnimationId = requestAnimationFrame(raceLoop);
@@ -465,6 +671,66 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const opponentDist = Math.max(0, ...opponentStates.map(s => s.distance));
 
+        // Check for Power 10 condition
+        if (!boatState.power10Active && !boatState.power10Cooldown && boatState.distance >= 500 && boatState.distance <= 1000) {
+            // Calculate how close we are to the ideal power 10 point (750m)
+            const distanceFrom750 = Math.abs(boatState.distance - 750);
+            const strategyTiming = boatState.coxswainStats.strategyTiming;
+            
+            // The better the strategy timing, the more likely the power 10 will be called close to 750m
+            // 5 stars means almost perfect timing
+            const maxDeviation = 150 - (strategyTiming * 20); // 50m deviation for 5 star, 150m for 0 star
+            
+            if (distanceFrom750 < maxDeviation && Math.random() < 0.1) { // 10% chance per update to call power 10
+                boatState.power10Active = true;
+                boatState.power10StartTime = raceTime;
+                
+                // Create power 10 indicator
+                const boatPanel = document.getElementById(`boat${opponentStates.indexOf(boatState) + 1}-panel`);
+                if (boatPanel) {
+                    const indicator = document.createElement('div');
+                    indicator.className = 'power10-indicator';
+                    indicator.textContent = 'POWER 10!';
+                    indicator.id = `boat${opponentStates.indexOf(boatState) + 1}-power10`;
+                    boatPanel.appendChild(indicator);
+                    indicator.style.display = 'block';
+                    
+                    // Remove after 3 seconds
+                    setTimeout(() => {
+                        if (indicator && indicator.parentNode) {
+                            indicator.parentNode.removeChild(indicator);
+                        }
+                    }, 3000);
+                }
+            }
+        }
+        
+        // Handle power 10 logic
+        if (boatState.power10Active) {
+            const power10Duration = 10 / boatState.strokeRate * 60; // 10 strokes duration
+            if (raceTime - boatState.power10StartTime > power10Duration) {
+                boatState.power10Active = false;
+                boatState.power10Cooldown = true;
+            }
+        }
+
+        // Update steering
+        const steeringQuality = boatState.coxswainStats.steeringQuality;
+        const steeringVariance = (5 - steeringQuality) * 0.05; // 0.25 for 0 stars, 0 for 5 stars
+        
+        // Gradually change steering direction
+        boatState.steeringChange += (Math.random() - 0.5) * steeringVariance * timeDelta;
+        boatState.steeringChange = Math.max(-0.2, Math.min(0.2, boatState.steeringChange));
+        
+        // Apply steering change
+        boatState.steeringOffset += boatState.steeringChange;
+        
+        // Keep steering within lane boundaries (-0.4 to 0.4)
+        boatState.steeringOffset = Math.max(-0.4, Math.min(0.4, boatState.steeringOffset));
+        
+        // Add correction factor to naturally bring boat back to center
+        boatState.steeringOffset *= 0.99;
+
         const {
             avgSpeed,
             strokeRate,
@@ -490,7 +756,9 @@ document.addEventListener('DOMContentLoaded', () => {
             for (let i = 0; i < 8; i++) {
                 if (boatData[i]) {
                     const rowerTech = (i % 2 === 0) ? boatData[i].technique.port : boatData[i].technique.starboard;
-                    boatState.rowerStats[i].quality = Math.max(1, Math.min(5, rowerTech + (Math.random() * 0.6) - 0.3));
+                    // Add coxswain tech call boost to base rower technique
+                    const techWithBoost = rowerTech + boatState.coxswainStats.techCallBoost;
+                    boatState.rowerStats[i].quality = Math.max(1, Math.min(5, techWithBoost + (Math.random() * 0.6) - 0.3));
                 }
             }
         }
@@ -498,6 +766,11 @@ document.addEventListener('DOMContentLoaded', () => {
         individualStats.forEach((stat, i) => stat.quality = boatState.rowerStats[i].quality);
         boatState.rowerStats = individualStats;
         let velocityMultiplier = (boatState.phase === 'drive') ? 1 + 0.5 * Math.sin(boatState.timeInPhase / driveDuration * Math.PI) : 1 - 0.25 * (boatState.timeInPhase / recoveryDuration);
+        
+        // Apply steering penalty to velocity
+        const steeringPenalty = Math.abs(boatState.steeringOffset) * 0.15;
+        velocityMultiplier *= (1 - steeringPenalty);
+        
         const instantaneousVelocity = avgSpeed * velocityMultiplier;
         boatState.distance += instantaneousVelocity * timeDelta * speedMultiplier;
 
@@ -506,6 +779,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const overshoot = boatState.distance - 1500;
             const timeOvershoot = instantaneousVelocity > 0 ? overshoot / instantaneousVelocity : 0;
             boatState.finishTime = raceTime - (timeOvershoot / speedMultiplier);
+            
+            // Remove power 10 indicator if it exists
+            const indicator = document.getElementById(`boat${opponentStates.indexOf(boatState) + 1}-power10`);
+            if (indicator && indicator.parentNode) {
+                indicator.parentNode.removeChild(indicator);
+            }
         }
     }
 
@@ -513,6 +792,20 @@ document.addEventListener('DOMContentLoaded', () => {
         allBoatStates.forEach((state, i) => {
             const detailsEl = boatDetailsEls[i];
             detailsEl.innerHTML = '';
+            
+            // Add coxswain card
+            if (allBoatCoxswains[i]) {
+                const coxswainCard = document.createElement('div');
+                coxswainCard.className = 'coxswain-stats-card';
+                coxswainCard.innerHTML = `
+                    <h4>${allBoatCoxswains[i].name} (Cox)</h4>
+                    <p>Motivation: ${allBoatCoxswains[i].motivation.toFixed(1)} ★ | Strategy: ${allBoatCoxswains[i].strategy.toFixed(1)} ★</p>
+                    <p>Tech Calls: ${allBoatCoxswains[i].tech_calls.toFixed(1)} ★ | Steering: ${allBoatCoxswains[i].steering.toFixed(1)} ★</p>
+                `;
+                detailsEl.appendChild(coxswainCard);
+            }
+            
+            // Add rower cards
             const grid = document.createElement('div');
             grid.className = 'boat-details-grid';
             state.rowerStats.forEach(stats => grid.appendChild(createStatCard(stats)));
@@ -547,8 +840,12 @@ document.addEventListener('DOMContentLoaded', () => {
         boat1Data = Array(8).fill(null);
         boat2Data = Array(8).fill(null);
         boat3Data = Array(8).fill(null);
+        boat1Coxswain = null;
+        boat2Coxswain = null;
+        boat3Coxswain = null;
         allBoatData = [boat1Data, boat2Data, boat3Data];
-
+        allBoatCoxswains = [boat1Coxswain, boat2Coxswain, boat3Coxswain];
+        
         boatNames.forEach((el, i) => {
             el.textContent = `Boat ${i + 1}`;
             el.setAttribute('contenteditable', 'true');
@@ -564,6 +861,14 @@ document.addEventListener('DOMContentLoaded', () => {
         boatSplitEls.forEach(el => el.textContent = '0:00.0');
         boatAvgQualityEls.forEach(el => el.textContent = '0.0');
         winnerMessageEl.textContent = '';
+
+        // Clear any power 10 indicators
+        for (let i = 1; i <= 3; i++) {
+            const indicator = document.getElementById(`boat${i}-power10`);
+            if (indicator && indicator.parentNode) {
+                indicator.parentNode.removeChild(indicator);
+            }
+        }
 
         startRaceBtn.disabled = false;
         startRaceBtn.classList.remove('d-none');
@@ -611,9 +916,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const strokeRower = boat[0];
         const baseRate = strokeRower ? strokeRower.best_rate : 34;
         let currentRate = baseRate;
+        
+        // Race phase management
         if ((isLosing && boatState.distance >= 1150) || (!isLosing && boatState.distance >= 1200)) {
             if (boatState.racePhase !== 'start') boatState.racePhase = 'sprint';
         }
+        
+        // Power 10 effect
+        let power10Modifier = 1.0;
+        if (boatState.power10Active) {
+            // Calculate effectiveness of power 10 based on distance from 750m
+            const distanceFrom750 = Math.abs(boatState.distance - 750);
+            const maxBoost = 0.15; // 15% boost at 750m
+            const boost = maxBoost * (1 - Math.min(1, distanceFrom750 / 250));
+            power10Modifier = 1 + boost;
+            currentRate += 2; // Increase rate during power 10
+        }
+        
         switch (boatState.racePhase) {
             case 'start':
                 const stroke = boatState.strokeCount;
@@ -659,11 +978,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentRate = baseRate + 4;
                 break;
         }
+        
+        // Apply coxswain's motivation effect to each rower
+        const motivationMultiplier = 1 + boatState.coxswainStats.motivationBoost;
+        
         boat.forEach((rower, index) => {
             const splitSeconds = parseTimeToSeconds(rower['2k']) / 4;
             const baseWatts = 2.80 / Math.pow(splitSeconds / 500, 3);
             const qualityWattsModifier = 1.0 + (boatState.rowerStats[index].quality - 4.0) * 0.02;
-            const actualWatts = baseWatts * powerModifier * ((boatState.racePhase === 'sprint') ? 1.05 : 1.0) * qualityWattsModifier;
+            
+            // Apply coxswain's motivation boost and power 10 effect to wattage
+            const actualWatts = baseWatts * powerModifier * ((boatState.racePhase === 'sprint') ? 1.05 : 1.0) 
+                              * qualityWattsModifier * motivationMultiplier * power10Modifier;
+            
             const strokeQuality = boatState.rowerStats[index].quality;
             totalTechAdjustment += (strokeQuality - 4.5) * 0.20;
             if (isLosing) totalMentalityAdjustment += (rower.mentality - 4.0) * 0.004;
@@ -680,6 +1007,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 quality: strokeQuality
             });
         });
+        
         const rateAdjustment = -(totalRateDifference / 8) * 0.013;
         const avgWeight = totalWeight / 8;
         const weightAdjustment = (170 - avgWeight) * 0.004;
@@ -690,9 +1018,17 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (windCondition === -1) {
             windAdjustment = -0.238 - (weightDifference * 0.0018);
         }
-        const avgSpeed = baseSpeed + (totalTechAdjustment / 8) + (totalFollowingAdjustment / 7) + rateAdjustment + (totalMentalityAdjustment / 8) + weightAdjustment + windAdjustment;
+        
+        // Apply all adjustments to base speed
+        const avgSpeed = baseSpeed + (totalTechAdjustment / 8) + (totalFollowingAdjustment / 7) 
+                       + rateAdjustment + (totalMentalityAdjustment / 8) + weightAdjustment 
+                       + windAdjustment;
+        
+        // Apply power 10 effect to final speed
+        const finalSpeed = avgSpeed * power10Modifier;
+        
         return {
-            avgSpeed: Math.max(0, avgSpeed),
+            avgSpeed: Math.max(0, finalSpeed),
             strokeRate: currentRate,
             individualStats
         };
@@ -727,7 +1063,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeBoats = allBoatStates.slice(0, numberOfBoats);
 
         activeBoats.forEach((boatState, i) => {
-            const yPosition = canvas.height * (i + 0.5) / numberOfBoats;
+            const laneHeight = canvas.height / numberOfBoats;
+            const laneCenter = laneHeight * (i + 0.5);
+            // Apply steering offset to y position
+            const yPosition = laneCenter + (boatState.steeringOffset * laneHeight * 0.5);
             drawBoat(boatState, yPosition, colors[i], allBoatData[i]);
         });
     }
@@ -772,6 +1111,16 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.globalAlpha = 1;
         });
         boatState.splashes = boatState.splashes.filter(s => s.life > 0);
+        
+        // Add directional indicator for steering
+        const steeringAngle = boatState.steeringOffset * 0.1; // Small angle for visualization
+        
+        // Save context for boat rotation
+        ctx.save();
+        ctx.translate(sternX + boatLengthOnCanvas * 0.5, y);
+        ctx.rotate(steeringAngle);
+        ctx.translate(-(sternX + boatLengthOnCanvas * 0.5), -y);
+        
         for (let i = 0; i < 8; i++) {
             const seatX = bowX - ((i + 1.5) * (boatLengthOnCanvas / 9));
             const isPort = (i + 1) % 2 === 0;
@@ -812,7 +1161,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-        if (boatState.justCaught) boatState.justCaught = false;
+        
+        // Draw boat hull with steering angle
         ctx.fillStyle = color;
         ctx.beginPath();
         ctx.moveTo(bowX, y);
@@ -820,6 +1170,11 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.bezierCurveTo(sternX + boatLengthOnCanvas * 0.3, y + boatWidth / 2, sternX + boatLengthOnCanvas * 0.7, y + boatWidth / 2, bowX, y);
         ctx.closePath();
         ctx.fill();
+        
+        // Restore context after boat rotation
+        ctx.restore();
+        
+        if (boatState.justCaught) boatState.justCaught = false;
     }
 
     // --- GLOBAL EVENT LISTENERS ---
