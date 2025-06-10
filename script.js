@@ -183,8 +183,9 @@ document.addEventListener('DOMContentLoaded', () => {
             power10Active: false,
             power10StartTime: 0,
             power10Cooldown: false,
-            steeringAngle: 0, // Current angle in radians
-            steeringAngularVelocity: 0, // How fast the angle is changing
+            steeringAngle: 0,
+            steeringAngularVelocity: 0,
+            yPosition: 0, // Will be set properly below
             rowerStats: Array(8).fill({
                 name: 'Empty',
                 watts: 0,
@@ -203,6 +204,13 @@ document.addEventListener('DOMContentLoaded', () => {
             animationStrokeTime: 0,
             powerModifier: 0,
         }));
+
+        // Set proper initial Y positions based on current canvas size
+        allBoatStates.forEach((state, index) => {
+            const laneHeight = canvas.height / numberOfBoats;
+            state.yPosition = laneHeight * (index + 0.5);
+        });
+
         updateAllRowerDetailsUI();
     }
 
@@ -360,9 +368,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (coxswain) {
                 state.coxswainStats = {
                     name: coxswain.name,
-                    motivationBoost: coxswain.motivation * 0.02, // 2% boost per star
+                    motivationBoost: coxswain.motivation * 0.05, // 5% boost per star
                     strategyTiming: coxswain.strategy,
-                    techCallBoost: coxswain.tech_calls * 0.05, // 0.25 quality points per star
+                    techCallBoost: coxswain.tech_calls * 0.1, // 0.25 quality points per star
                     steeringQuality: coxswain.steering
                 };
             } else {
@@ -539,37 +547,34 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function autofillBoats() {
-        const boatLineups = allBoatData.slice(0, numberOfBoats);
-        const boatCoxswains = allBoatCoxswains.slice(0, numberOfBoats);
-
-        // Create a pool of available coxswains, excluding those already placed
-        const assignedCoxswainNames = new Set(boatCoxswains.filter(c => c).map(c => c.name));
-        let availableCoxswains = allCoxswains.filter(c => !assignedCoxswainNames.has(c.name));
-
-        // Assign coxswains to empty slots
+        // --- 1) Fill Coxswains ---
+        // Simply assign a random coxswain into each empty slot
         for (let i = 0; i < numberOfBoats; i++) {
-            if (!boatCoxswains[i] && availableCoxswains.length > 0) {
-                const randomIndex = Math.floor(Math.random() * availableCoxswains.length);
-                // Assign the coxswain and remove them from the available pool
-                allBoatCoxswains[i] = availableCoxswains.splice(randomIndex, 1)[0];
+            if (!allBoatCoxswains[i] && allCoxswains.length > 0) {
+                const idx = Math.floor(Math.random() * allCoxswains.length);
+                allBoatCoxswains[i] = allCoxswains[idx];
             }
         }
 
-        // Create a pool of available rowers, excluding those already placed
-        const assignedRowerNames = new Set(boatLineups.flat().filter(r => r).map(r => r.name));
-        let availableRowers = allRowers.filter(r => !assignedRowerNames.has(r.name));
+        // --- 2) Fill Rowing Seats Boat by Boat ---
+        for (let boatIndex = 0; boatIndex < numberOfBoats; boatIndex++) {
+            const lineup = allBoatData[boatIndex];
 
-        // Assign rowers to empty seats
-        boatLineups.forEach((lineup) => {
-            for (let i = 0; i < 8; i++) {
-                if (lineup[i] === null && availableRowers.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * availableRowers.length);
-                    // Assign the rower and remove them from the available pool
-                    lineup[i] = availableRowers.splice(randomIndex, 1)[0];
+            // Build a fresh pool of rowers excluding anyone already in this boat
+            let pool = allRowers.filter(r =>
+                !lineup.some(seat => seat && seat.name === r.name)
+            );
+
+            // Assign a random rower into each empty seat
+            for (let seat = 0; seat < 8; seat++) {
+                if (!lineup[seat] && pool.length > 0) {
+                    const idx = Math.floor(Math.random() * pool.length);
+                    lineup[seat] = pool.splice(idx, 1)[0];
                 }
             }
-        });
+        }
 
+        // Re-render the lineups in the UI
         setupAllBoatLineups();
     }
 
@@ -713,26 +718,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // --- New Steering Logic ---
-    const steeringQuality = boatState.coxswainStats.steeringQuality;
+        const steeringQuality = boatState.coxswainStats.steeringQuality;
 
-    // 1. Random "pushes" on the rudder. Less skilled coxswains cause bigger pushes.
-    const randomPush = (6 - steeringQuality) * 0.005 * (Math.random() - 0.5);
+        // 1. Random "pushes" on the rudder. Less skilled coxswains cause bigger pushes.
+        const randomPush = (6 - steeringQuality) * 0.1 * (Math.random() - 0.5);
 
-    // 2. Corrective force. More skilled coxswains correct faster.
-    const correctionForce = -boatState.steeringAngle * 0.5 * (steeringQuality / 5);
+        // 2. Corrective force. More skilled coxswains correct faster.
+        const correctionForce = -boatState.steeringAngle * 0.5 * (steeringQuality / 5);
 
-    // 3. Damping force. Prevents the boat from oscillating wildly.
-    const dampingForce = -boatState.steeringAngularVelocity * 0.8;
+        // 3. Damping force. Prevents the boat from oscillating wildly.
+        const dampingForce = -boatState.steeringAngularVelocity * 0.8;
 
-    // 4. Calculate total angular acceleration and update velocity.
-    const angularAcceleration = randomPush + correctionForce + dampingForce;
-    // FIXED: Added speedMultiplier to the physics calculation
-    boatState.steeringAngularVelocity += angularAcceleration * timeDelta * speedMultiplier;
+        // 4. Calculate total angular acceleration and update velocity.
+        const angularAcceleration = randomPush + correctionForce + dampingForce;
+        // FIXED: Added speedMultiplier to the physics calculation
+        boatState.steeringAngularVelocity += angularAcceleration * timeDelta * speedMultiplier;
 
-    // 5. Update the boat's angle and cap it to prevent spinning.
-    // FIXED: Added speedMultiplier and removed the first redundant cap
-    boatState.steeringAngle += boatState.steeringAngularVelocity * timeDelta * speedMultiplier;
-    boatState.steeringAngle = Math.max(-0.05, Math.min(0.05, boatState.steeringAngle)); // Approx +/- 3 degrees
+        // 5. Update the boat's angle and cap it to prevent spinning.
+        // FIXED: Added speedMultiplier and removed the first redundant cap
+        boatState.steeringAngle += boatState.steeringAngularVelocity * timeDelta * speedMultiplier;
+        boatState.steeringAngle = Math.max(-0.2, Math.min(0.2, boatState.steeringAngle)); // Approx +/- 3 degrees
 
         const {
             avgSpeed,
@@ -775,7 +780,20 @@ document.addEventListener('DOMContentLoaded', () => {
         velocityMultiplier *= (1 - steeringPenalty);
 
         const instantaneousVelocity = avgSpeed * velocityMultiplier;
-        boatState.distance += instantaneousVelocity * timeDelta * speedMultiplier;
+
+        // Calculate movement components based on steering angle
+        const forwardMovement = instantaneousVelocity * Math.cos(boatState.steeringAngle);
+        const lateralMovement = instantaneousVelocity * Math.sin(boatState.steeringAngle);
+
+        // Update position
+        boatState.distance += forwardMovement * timeDelta * speedMultiplier;
+        boatState.yPosition += lateralMovement * timeDelta * speedMultiplier;
+
+        // Optional: Add soft boundaries to prevent boats from going completely off-screen
+        const laneHeight = canvas.height / numberOfBoats;
+        const minY = laneHeight * 0.1; // 10% margin from top
+        const maxY = canvas.height - (laneHeight * 0.1); // 10% margin from bottom
+        boatState.yPosition = Math.max(minY, Math.min(maxY, boatState.yPosition));
 
         if (boatState.distance >= 1500) {
             boatState.isFinished = true;
@@ -896,7 +914,7 @@ document.addEventListener('DOMContentLoaded', () => {
             totalWeight += rower.weight;
         });
         const avg500mSplit = (total2kSeconds / 8) / 4;
-        const baseSpeed = 845 / Math.pow(avg500mSplit, 1.1);
+        const baseSpeed = 210 / Math.pow(avg500mSplit, 0.80);
         let powerModifier = 1.0,
             totalTechAdjustment = 0,
             totalFollowingAdjustment = 0,
@@ -905,11 +923,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let individualStats = [];
         const isLosing = boatState.distance < opponentDist;
         const strokeRower = boat[0];
-        const baseRate = strokeRower ? strokeRower.best_rate : 34;
+        const baseRate = strokeRower ? strokeRower.best_rate : 36;
         let currentRate = baseRate;
 
         // Race phase management
-        if ((isLosing && boatState.distance >= 1150) || (!isLosing && boatState.distance >= 1200)) {
+        if ((isLosing && boatState.distance >= 1100) || (!isLosing && boatState.distance >= 1200)) {
             if (boatState.racePhase !== 'start') boatState.racePhase = 'sprint';
         }
 
@@ -962,12 +980,18 @@ document.addEventListener('DOMContentLoaded', () => {
         // Power 10 effect - MOVED TO AFTER THE SWITCH STATEMENT
         let power10Modifier = 1.0;
         if (boatState.power10Active) {
-            // Calculate effectiveness of power 10 based on distance from 750m
+            // Calculate how timing affects Power 10 strength
             const distanceFrom750 = Math.abs(boatState.distance - 750);
-            const maxBoost = 0.15; // 15% boost at 750m
-            const boost = maxBoost * (1 - Math.min(1, distanceFrom750 / 250));
+            const timingFactor = 1 - Math.min(1, distanceFrom750 / 250);
+            const maxBoost = 0.15; // 15% boost when perfectly timed
+            const maxRateBoost = 2; // +2 spm when perfectly timed
+
+            // Scale both speed boost and rate boost by timingFactor
+            const boost = maxBoost * timingFactor;
             power10Modifier = 1 + boost;
-            currentRate += 2; // Increase rate during power 10
+
+            const rateBoost = maxRateBoost * timingFactor;
+            currentRate += rateBoost;
         }
 
         // Apply coxswain's motivation effect to each rower
@@ -983,9 +1007,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 qualityWattsModifier * motivationMultiplier * power10Modifier;
 
             const strokeQuality = boatState.rowerStats[index].quality;
-            totalTechAdjustment += (strokeQuality - 4.5) * 0.20;
+            totalTechAdjustment += (strokeQuality - 4.5) * 0.15; // Reduced from 0.20
             if (isLosing) totalMentalityAdjustment += (rower.mentality - 4.0) * 0.004;
-            if (boatState.racePhase === 'sprint') totalMentalityAdjustment += (rower.mentality - 4.0) * 0.006;
+            if (boatState.racePhase === 'sprint') totalMentalityAdjustment += (rower.mentality - 4.0) * 0.020;
             if (index > 0) totalFollowingAdjustment += (rower.following - 4.5) * 0.01;
             if (boatState.racePhase !== 'start') {
                 let bestRate = rower.best_rate;
@@ -1005,9 +1029,9 @@ document.addEventListener('DOMContentLoaded', () => {
         let windAdjustment = 0;
         const weightDifference = 170 - avgWeight;
         if (windCondition === 1) {
-            windAdjustment = 0.169 + (weightDifference * 0.0015);
+            windAdjustment = 0.135 + (weightDifference * 0.0035); // Slightly reduced tailwind benefit
         } else if (windCondition === -1) {
-            windAdjustment = -0.238 - (weightDifference * 0.0018);
+            windAdjustment = -0.225 - (weightDifference * 0.0015); // Adjusted for correct headwind impact
         }
 
         // Apply all adjustments to base speed
@@ -1054,10 +1078,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const activeBoats = allBoatStates.slice(0, numberOfBoats);
 
         activeBoats.forEach((boatState, i) => {
-            const laneHeight = canvas.height / numberOfBoats;
-            const laneCenter = laneHeight * (i + 0.5);
-            // yPosition is now just the center of the lane; rotation is handled in drawBoat
-            const yPosition = laneCenter;
+            // Use the boat's actual Y position instead of fixed lane center
+            const yPosition = boatState.yPosition;
             drawBoat(boatState, yPosition, colors[i], allBoatData[i]);
         });
     }
