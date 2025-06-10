@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const lineupLibraryBtns = document.querySelectorAll('.lineup-library-btn');
     const lineupLibraryModal = document.getElementById('lineup-library-modal');
     const lineupOptionsContainer = document.getElementById('lineup-options-container');
+    const coxswainSearch = document.getElementById('coxswain-roster-search');
 
     // Boat Elements (Grouped)
     const boatNames = [document.getElementById('boat1-name'), document.getElementById('boat2-name'), document.getElementById('boat3-name')];
@@ -89,10 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTelemetryHeaders();
         setupLineupLibraryButtons();
         window.addEventListener('resize', setCanvasSize);
-        
+
         // Add two-boats-mode class to body since default is now 2 boats
         document.body.classList.add('two-boats-mode');
-        
+
         // Initialize Bootstrap modal
         lineupModal = new bootstrap.Modal(lineupLibraryModal);
     }
@@ -102,9 +103,9 @@ document.addEventListener('DOMContentLoaded', () => {
         lineupLibraryBtns.forEach(btn => {
             btn.addEventListener('click', (e) => {
                 selectedBoatIndex = parseInt(e.currentTarget.dataset.boat) - 1;
-                document.getElementById('lineupLibraryModalLabel').textContent = 
+                document.getElementById('lineupLibraryModalLabel').textContent =
                     `Select Lineup for ${boatNames[selectedBoatIndex].textContent}`;
-                
+
                 // Generate lineup options from the predefined lineups
                 lineupOptionsContainer.innerHTML = '';
                 predefinedLineups.forEach((lineup, index) => {
@@ -112,50 +113,50 @@ document.addEventListener('DOMContentLoaded', () => {
                     option.type = 'button';
                     option.className = 'list-group-item list-group-item-action bg-dark text-light';
                     option.dataset.lineupIndex = index;
-                    
+
                     // Get last names only
                     const lastNames = lineup.rowers.map(fullName => {
                         const nameParts = fullName.split(' ');
                         return nameParts[nameParts.length - 1]; // Get the last part of the name
                     });
-                    
+
                     // Create summary of rowers for display with last names only
                     const rowerSummary = lastNames.join(', ');
-                    
+
                     // Get coxswain last name
                     const coxswainName = lineup.coxswain ? lineup.coxswain.split(' ').pop() : 'None';
-                    
+
                     option.innerHTML = `
                         <strong>${lineup.name}</strong>
                         <small class="d-block text-secondary">Cox: ${coxswainName} | ${rowerSummary}</small>
                     `;
-                    
+
                     option.addEventListener('click', () => applyLineup(index));
-                    
+
                     lineupOptionsContainer.appendChild(option);
                 });
-                
+
                 lineupModal.show();
             });
         });
     }
-    
+
     function applyLineup(lineupIndex) {
         const lineup = predefinedLineups[lineupIndex];
-        
+
         if (lineup) {
             // Set the rowers in the boat
-            allBoatData[selectedBoatIndex] = lineup.rowers.map(name => 
+            allBoatData[selectedBoatIndex] = lineup.rowers.map(name =>
                 allRowers.find(rower => rower.name === name) || null
             );
-            
+
             // Set the coxswain in the boat
-            allBoatCoxswains[selectedBoatIndex] = lineup.coxswain ? 
+            allBoatCoxswains[selectedBoatIndex] = lineup.coxswain ?
                 allCoxswains.find(cox => cox.name === lineup.coxswain) || null : null;
-            
+
             // Set the boat name to match the lineup name
             boatNames[selectedBoatIndex].textContent = lineup.name;
-            
+
             // Update UI
             setupAllBoatLineups();
             updateTelemetryHeaders();
@@ -182,9 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
             power10Active: false,
             power10StartTime: 0,
             power10Cooldown: false,
-            steeringOffset: 0,
-            steeringDirection: 1,
-            steeringChange: 0,
+            steeringAngle: 0, // Current angle in radians
+            steeringAngularVelocity: 0, // How fast the angle is changing
             rowerStats: Array(8).fill({
                 name: 'Empty',
                 watts: 0,
@@ -259,10 +259,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    function renderCoxswainList() {
+    function renderCoxswainList(filter = '') {
         coxswainList.innerHTML = '';
-        
-        allCoxswains.forEach(coxswain => {
+        const lowerCaseFilter = filter.toLowerCase();
+        const filteredCoxswains = allCoxswains.filter(coxswain => coxswain.name.toLowerCase().includes(lowerCaseFilter));
+
+        filteredCoxswains.forEach(coxswain => {
             const card = createCoxswainCard(coxswain);
             card.draggable = true;
             card.addEventListener('dragstart', e => {
@@ -286,28 +288,28 @@ document.addEventListener('DOMContentLoaded', () => {
         allBoatData.forEach((boatData, boatIndex) => {
             const lineupEl = boatLineups[boatIndex];
             lineupEl.innerHTML = '';
-            
+
             // Create coxswain slot
             const coxswainSlot = document.createElement('div');
             coxswainSlot.className = 'coxswain-slot d-flex justify-content-between align-items-center';
             coxswainSlot.dataset.boat = boatIndex + 1;
-            
+
             const coxswainLabel = document.createElement('span');
             coxswainLabel.className = 'coxswain-slot-label';
             coxswainLabel.textContent = 'Coxswain';
             coxswainSlot.appendChild(coxswainLabel);
-            
+
             const coxswain = allBoatCoxswains[boatIndex];
             if (coxswain) {
                 coxswainSlot.classList.add('has-coxswain');
                 coxswainSlot.appendChild(createCoxswainCard(coxswain));
             }
-            
+
             lineupEl.appendChild(coxswainSlot);
-            
+
             // Add coxswain slot listeners
             addCoxswainSlotListeners(coxswainSlot);
-            
+
             // Create rower slots
             const listGroup = document.createElement('ul');
             listGroup.className = 'list-group';
@@ -493,9 +495,9 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             seat.classList.remove('drag-over');
             const cardType = e.dataTransfer.getData('cardType');
-            
+
             if (cardType === 'coxswain') return; // Don't allow coxswains in rower seats
-            
+
             const rowerName = e.dataTransfer.getData('text/plain');
             const rower = allRowers.find(r => r.name === rowerName);
             if (!rower) return;
@@ -522,9 +524,9 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault();
             slot.classList.remove('drag-over');
             const cardType = e.dataTransfer.getData('cardType');
-            
+
             if (cardType === 'rower') return; // Don't allow rowers in coxswain slot
-            
+
             const coxswainName = e.dataTransfer.getData('text/plain');
             const coxswain = allCoxswains.find(c => c.name === coxswainName);
             if (!coxswain) return;
@@ -540,35 +542,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const boatLineups = allBoatData.slice(0, numberOfBoats);
         const boatCoxswains = allBoatCoxswains.slice(0, numberOfBoats);
 
-        // First, assign coxswains if needed
+        // Create a pool of available coxswains, excluding those already placed
+        const assignedCoxswainNames = new Set(boatCoxswains.filter(c => c).map(c => c.name));
+        let availableCoxswains = allCoxswains.filter(c => !assignedCoxswainNames.has(c.name));
+
+        // Assign coxswains to empty slots
         for (let i = 0; i < numberOfBoats; i++) {
-            if (!boatCoxswains[i]) {
-                const availableCoxswains = allCoxswains.filter(cox => 
-                    !boatCoxswains.includes(cox));
-                if (availableCoxswains.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * availableCoxswains.length);
-                    boatCoxswains[i] = availableCoxswains[randomIndex];
-                }
+            if (!boatCoxswains[i] && availableCoxswains.length > 0) {
+                const randomIndex = Math.floor(Math.random() * availableCoxswains.length);
+                // Assign the coxswain and remove them from the available pool
+                allBoatCoxswains[i] = availableCoxswains.splice(randomIndex, 1)[0];
             }
         }
 
-        // Then assign rowers
-        boatLineups.forEach((lineup, boatIndex) => {
-            const placedInThisBoat = new Set(lineup.filter(r => r).map(r => r.name));
-            let availableForThisBoat = allRowers.filter(r => !placedInThisBoat.has(r.name));
+        // Create a pool of available rowers, excluding those already placed
+        const assignedRowerNames = new Set(boatLineups.flat().filter(r => r).map(r => r.name));
+        let availableRowers = allRowers.filter(r => !assignedRowerNames.has(r.name));
 
+        // Assign rowers to empty seats
+        boatLineups.forEach((lineup) => {
             for (let i = 0; i < 8; i++) {
-                if (lineup[i] === null) {
-                    if (availableForThisBoat.length === 0) {
-                        availableForThisBoat = allRowers.filter(r => !placedInThisBoat.has(r.name));
-                    }
-                    if (availableForThisBoat.length > 0) {
-                        const randomIndex = Math.floor(Math.random() * availableForThisBoat.length);
-                        const selectedRower = availableForThisBoat[randomIndex];
-                        lineup[i] = selectedRower;
-                        placedInThisBoat.add(selectedRower.name);
-                        availableForThisBoat.splice(randomIndex, 1);
-                    }
+                if (lineup[i] === null && availableRowers.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * availableRowers.length);
+                    // Assign the rower and remove them from the available pool
+                    lineup[i] = availableRowers.splice(randomIndex, 1)[0];
                 }
             }
         });
@@ -586,13 +583,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function startRace() {
         const boatsToRace = allBoatData.slice(0, numberOfBoats);
         const coxswainsToRace = allBoatCoxswains.slice(0, numberOfBoats);
-        
+
         // Check if all boats have rowers
         if (boatsToRace.some(boat => boat.some(r => r === null))) {
             alert(`All ${numberOfBoats} boats must be full (8 rowers) to start the race.`);
             return;
         }
-        
+
         // Check if all boats have coxswains
         if (coxswainsToRace.some(cox => cox === null)) {
             alert(`All ${numberOfBoats} boats must have a coxswain to start the race.`);
@@ -631,7 +628,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         activeStates.forEach((boatState, i) => {
             const opponentStates = activeStates.filter((_, j) => i !== j);
-            updateBoat(allBoatData[i], boatState, opponentStates, timeDelta, raceSpeedMultiplier);
+            updateBoat(allBoatData[i], boatState, i, opponentStates, timeDelta, raceSpeedMultiplier);
         });
 
         drawRaceCanvas();
@@ -666,7 +663,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function updateBoat(boatData, boatState, opponentStates, timeDelta, speedMultiplier) {
+    function updateBoat(boatData, boatState, boatIndex, opponentStates, timeDelta, speedMultiplier) {
         if (boatState.isFinished) return;
 
         const opponentDist = Math.max(0, ...opponentStates.map(s => s.distance));
@@ -676,25 +673,26 @@ document.addEventListener('DOMContentLoaded', () => {
             // Calculate how close we are to the ideal power 10 point (750m)
             const distanceFrom750 = Math.abs(boatState.distance - 750);
             const strategyTiming = boatState.coxswainStats.strategyTiming;
-            
+
             // The better the strategy timing, the more likely the power 10 will be called close to 750m
             // 5 stars means almost perfect timing
             const maxDeviation = 150 - (strategyTiming * 20); // 50m deviation for 5 star, 150m for 0 star
-            
+
             if (distanceFrom750 < maxDeviation && Math.random() < 0.1) { // 10% chance per update to call power 10
                 boatState.power10Active = true;
                 boatState.power10StartTime = raceTime;
-                
+
                 // Create power 10 indicator
-                const boatPanel = document.getElementById(`boat${opponentStates.indexOf(boatState) + 1}-panel`);
+                const boatPanel = document.getElementById(`boat${boatIndex + 1}-panel`);
                 if (boatPanel) {
                     const indicator = document.createElement('div');
                     indicator.className = 'power10-indicator';
                     indicator.textContent = 'POWER 10!';
-                    indicator.id = `boat${opponentStates.indexOf(boatState) + 1}-power10`;
+                    indicator.id = `boat${boatIndex + 1}-power10`;
                     boatPanel.appendChild(indicator);
+                    //...
                     indicator.style.display = 'block';
-                    
+
                     // Remove after 3 seconds
                     setTimeout(() => {
                         if (indicator && indicator.parentNode) {
@@ -704,7 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-        
+
         // Handle power 10 logic
         if (boatState.power10Active) {
             const power10Duration = 10 / boatState.strokeRate * 60; // 10 strokes duration
@@ -714,22 +712,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Update steering
-        const steeringQuality = boatState.coxswainStats.steeringQuality;
-        const steeringVariance = (5 - steeringQuality) * 0.05; // 0.25 for 0 stars, 0 for 5 stars
-        
-        // Gradually change steering direction
-        boatState.steeringChange += (Math.random() - 0.5) * steeringVariance * timeDelta;
-        boatState.steeringChange = Math.max(-0.2, Math.min(0.2, boatState.steeringChange));
-        
-        // Apply steering change
-        boatState.steeringOffset += boatState.steeringChange;
-        
-        // Keep steering within lane boundaries (-0.4 to 0.4)
-        boatState.steeringOffset = Math.max(-0.4, Math.min(0.4, boatState.steeringOffset));
-        
-        // Add correction factor to naturally bring boat back to center
-        boatState.steeringOffset *= 0.99;
+        // --- New Steering Logic ---
+    const steeringQuality = boatState.coxswainStats.steeringQuality;
+
+    // 1. Random "pushes" on the rudder. Less skilled coxswains cause bigger pushes.
+    const randomPush = (6 - steeringQuality) * 0.005 * (Math.random() - 0.5);
+
+    // 2. Corrective force. More skilled coxswains correct faster.
+    const correctionForce = -boatState.steeringAngle * 0.5 * (steeringQuality / 5);
+
+    // 3. Damping force. Prevents the boat from oscillating wildly.
+    const dampingForce = -boatState.steeringAngularVelocity * 0.8;
+
+    // 4. Calculate total angular acceleration and update velocity.
+    const angularAcceleration = randomPush + correctionForce + dampingForce;
+    // FIXED: Added speedMultiplier to the physics calculation
+    boatState.steeringAngularVelocity += angularAcceleration * timeDelta * speedMultiplier;
+
+    // 5. Update the boat's angle and cap it to prevent spinning.
+    // FIXED: Added speedMultiplier and removed the first redundant cap
+    boatState.steeringAngle += boatState.steeringAngularVelocity * timeDelta * speedMultiplier;
+    boatState.steeringAngle = Math.max(-0.05, Math.min(0.05, boatState.steeringAngle)); // Approx +/- 3 degrees
 
         const {
             avgSpeed,
@@ -766,11 +769,11 @@ document.addEventListener('DOMContentLoaded', () => {
         individualStats.forEach((stat, i) => stat.quality = boatState.rowerStats[i].quality);
         boatState.rowerStats = individualStats;
         let velocityMultiplier = (boatState.phase === 'drive') ? 1 + 0.5 * Math.sin(boatState.timeInPhase / driveDuration * Math.PI) : 1 - 0.25 * (boatState.timeInPhase / recoveryDuration);
-        
-        // Apply steering penalty to velocity
-        const steeringPenalty = Math.abs(boatState.steeringOffset) * 0.15;
+
+        // Apply steering penalty to velocity based on the angle
+        const steeringPenalty = Math.abs(boatState.steeringAngle) * 2; // Penalty for being off-course
         velocityMultiplier *= (1 - steeringPenalty);
-        
+
         const instantaneousVelocity = avgSpeed * velocityMultiplier;
         boatState.distance += instantaneousVelocity * timeDelta * speedMultiplier;
 
@@ -779,9 +782,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const overshoot = boatState.distance - 1500;
             const timeOvershoot = instantaneousVelocity > 0 ? overshoot / instantaneousVelocity : 0;
             boatState.finishTime = raceTime - (timeOvershoot / speedMultiplier);
-            
+
             // Remove power 10 indicator if it exists
-            const indicator = document.getElementById(`boat${opponentStates.indexOf(boatState) + 1}-power10`);
+            const indicator = document.getElementById(`boat${boatIndex + 1}-power10`);
             if (indicator && indicator.parentNode) {
                 indicator.parentNode.removeChild(indicator);
             }
@@ -792,19 +795,7 @@ document.addEventListener('DOMContentLoaded', () => {
         allBoatStates.forEach((state, i) => {
             const detailsEl = boatDetailsEls[i];
             detailsEl.innerHTML = '';
-            
-            // Add coxswain card
-            if (allBoatCoxswains[i]) {
-                const coxswainCard = document.createElement('div');
-                coxswainCard.className = 'coxswain-stats-card';
-                coxswainCard.innerHTML = `
-                    <h4>${allBoatCoxswains[i].name} (Cox)</h4>
-                    <p>Motivation: ${allBoatCoxswains[i].motivation.toFixed(1)} ★ | Strategy: ${allBoatCoxswains[i].strategy.toFixed(1)} ★</p>
-                    <p>Tech Calls: ${allBoatCoxswains[i].tech_calls.toFixed(1)} ★ | Steering: ${allBoatCoxswains[i].steering.toFixed(1)} ★</p>
-                `;
-                detailsEl.appendChild(coxswainCard);
-            }
-            
+
             // Add rower cards
             const grid = document.createElement('div');
             grid.className = 'boat-details-grid';
@@ -845,7 +836,7 @@ document.addEventListener('DOMContentLoaded', () => {
         boat3Coxswain = null;
         allBoatData = [boat1Data, boat2Data, boat3Data];
         allBoatCoxswains = [boat1Coxswain, boat2Coxswain, boat3Coxswain];
-        
+
         boatNames.forEach((el, i) => {
             el.textContent = `Boat ${i + 1}`;
             el.setAttribute('contenteditable', 'true');
@@ -916,23 +907,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const strokeRower = boat[0];
         const baseRate = strokeRower ? strokeRower.best_rate : 34;
         let currentRate = baseRate;
-        
+
         // Race phase management
         if ((isLosing && boatState.distance >= 1150) || (!isLosing && boatState.distance >= 1200)) {
             if (boatState.racePhase !== 'start') boatState.racePhase = 'sprint';
         }
-        
-        // Power 10 effect
-        let power10Modifier = 1.0;
-        if (boatState.power10Active) {
-            // Calculate effectiveness of power 10 based on distance from 750m
-            const distanceFrom750 = Math.abs(boatState.distance - 750);
-            const maxBoost = 0.15; // 15% boost at 750m
-            const boost = maxBoost * (1 - Math.min(1, distanceFrom750 / 250));
-            power10Modifier = 1 + boost;
-            currentRate += 2; // Increase rate during power 10
-        }
-        
+
         switch (boatState.racePhase) {
             case 'start':
                 const stroke = boatState.strokeCount;
@@ -978,19 +958,30 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentRate = baseRate + 4;
                 break;
         }
-        
+
+        // Power 10 effect - MOVED TO AFTER THE SWITCH STATEMENT
+        let power10Modifier = 1.0;
+        if (boatState.power10Active) {
+            // Calculate effectiveness of power 10 based on distance from 750m
+            const distanceFrom750 = Math.abs(boatState.distance - 750);
+            const maxBoost = 0.15; // 15% boost at 750m
+            const boost = maxBoost * (1 - Math.min(1, distanceFrom750 / 250));
+            power10Modifier = 1 + boost;
+            currentRate += 2; // Increase rate during power 10
+        }
+
         // Apply coxswain's motivation effect to each rower
         const motivationMultiplier = 1 + boatState.coxswainStats.motivationBoost;
-        
+
         boat.forEach((rower, index) => {
             const splitSeconds = parseTimeToSeconds(rower['2k']) / 4;
             const baseWatts = 2.80 / Math.pow(splitSeconds / 500, 3);
             const qualityWattsModifier = 1.0 + (boatState.rowerStats[index].quality - 4.0) * 0.02;
-            
+
             // Apply coxswain's motivation boost and power 10 effect to wattage
-            const actualWatts = baseWatts * powerModifier * ((boatState.racePhase === 'sprint') ? 1.05 : 1.0) 
-                              * qualityWattsModifier * motivationMultiplier * power10Modifier;
-            
+            const actualWatts = baseWatts * powerModifier * ((boatState.racePhase === 'sprint') ? 1.05 : 1.0) *
+                qualityWattsModifier * motivationMultiplier * power10Modifier;
+
             const strokeQuality = boatState.rowerStats[index].quality;
             totalTechAdjustment += (strokeQuality - 4.5) * 0.20;
             if (isLosing) totalMentalityAdjustment += (rower.mentality - 4.0) * 0.004;
@@ -1007,7 +998,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 quality: strokeQuality
             });
         });
-        
+
         const rateAdjustment = -(totalRateDifference / 8) * 0.013;
         const avgWeight = totalWeight / 8;
         const weightAdjustment = (170 - avgWeight) * 0.004;
@@ -1018,15 +1009,15 @@ document.addEventListener('DOMContentLoaded', () => {
         } else if (windCondition === -1) {
             windAdjustment = -0.238 - (weightDifference * 0.0018);
         }
-        
+
         // Apply all adjustments to base speed
-        const avgSpeed = baseSpeed + (totalTechAdjustment / 8) + (totalFollowingAdjustment / 7) 
-                       + rateAdjustment + (totalMentalityAdjustment / 8) + weightAdjustment 
-                       + windAdjustment;
-        
+        const avgSpeed = baseSpeed + (totalTechAdjustment / 8) + (totalFollowingAdjustment / 7) +
+            rateAdjustment + (totalMentalityAdjustment / 8) + weightAdjustment +
+            windAdjustment;
+
         // Apply power 10 effect to final speed
         const finalSpeed = avgSpeed * power10Modifier;
-        
+
         return {
             avgSpeed: Math.max(0, finalSpeed),
             strokeRate: currentRate,
@@ -1065,8 +1056,8 @@ document.addEventListener('DOMContentLoaded', () => {
         activeBoats.forEach((boatState, i) => {
             const laneHeight = canvas.height / numberOfBoats;
             const laneCenter = laneHeight * (i + 0.5);
-            // Apply steering offset to y position
-            const yPosition = laneCenter + (boatState.steeringOffset * laneHeight * 0.5);
+            // yPosition is now just the center of the lane; rotation is handled in drawBoat
+            const yPosition = laneCenter;
             drawBoat(boatState, yPosition, colors[i], allBoatData[i]);
         });
     }
@@ -1111,16 +1102,16 @@ document.addEventListener('DOMContentLoaded', () => {
             ctx.globalAlpha = 1;
         });
         boatState.splashes = boatState.splashes.filter(s => s.life > 0);
-        
-        // Add directional indicator for steering
-        const steeringAngle = boatState.steeringOffset * 0.1; // Small angle for visualization
-        
+
+        // Use the calculated steering angle from boatState
+        const steeringAngle = boatState.steeringAngle || 0;
+
         // Save context for boat rotation
         ctx.save();
         ctx.translate(sternX + boatLengthOnCanvas * 0.5, y);
         ctx.rotate(steeringAngle);
         ctx.translate(-(sternX + boatLengthOnCanvas * 0.5), -y);
-        
+
         for (let i = 0; i < 8; i++) {
             const seatX = bowX - ((i + 1.5) * (boatLengthOnCanvas / 9));
             const isPort = (i + 1) % 2 === 0;
@@ -1161,7 +1152,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         }
-        
+
         // Draw boat hull with steering angle
         ctx.fillStyle = color;
         ctx.beginPath();
@@ -1170,10 +1161,10 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.bezierCurveTo(sternX + boatLengthOnCanvas * 0.3, y + boatWidth / 2, sternX + boatLengthOnCanvas * 0.7, y + boatWidth / 2, bowX, y);
         ctx.closePath();
         ctx.fill();
-        
+
         // Restore context after boat rotation
         ctx.restore();
-        
+
         if (boatState.justCaught) boatState.justCaught = false;
     }
 
@@ -1183,6 +1174,7 @@ document.addEventListener('DOMContentLoaded', () => {
     resetBoatsBtn.addEventListener('click', resetBoats);
     autofillBtn.addEventListener('click', autofillBoats);
     boatCountSelect.addEventListener('change', updateBoatCount);
+    coxswainSearch.addEventListener('input', (e) => renderCoxswainList(e.target.value));
     rosterSearch.addEventListener('input', (e) => renderRosterList(e.target.value));
     speedSlider.addEventListener('input', (e) => {
         raceSpeedMultiplier = parseFloat(e.target.value);

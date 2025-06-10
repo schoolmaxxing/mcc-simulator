@@ -137,13 +137,13 @@ h5,
 }
 
 /* Roster */
-#roster-search {
+#roster-search, #coxswain-roster-search {
     background-color: var(--bg-tertiary);
     border-color: var(--border-sleek);
     color: var(--cream);
 }
 
-#roster-search:focus {
+#roster-search:focus, #coxswain-roster-search:focus {
     border-color: var(--auburn);
     box-shadow: 0 0 0 0.25rem rgba(165, 36, 34, 0.25);
 }
@@ -184,28 +184,38 @@ h5,
 }
 
 /* Coxswain specifics */
-.coxswain-card {
-    background-color: var(--bg-tertiary);
-    border: 1px dashed var(--border-sleek);
-}
 
 .coxswain-slot {
     margin-bottom: 10px;
-    background-color: rgba(165, 36, 34, 0.1);
-    border: 1px dashed var(--border-sleek);
     border-radius: 5px;
     padding: 10px;
-}
-
-.coxswain-slot.has-coxswain {
-    border-style: solid;
+    background: linear-gradient(145deg, var(--bg-tertiary), var(--bg-secondary));
+    border: 1px solid var(--khaki);
+    box-shadow: inset 0 0 10px rgba(190, 165, 125, 0.1);
+    position: relative;
+    transition: all 0.2s ease-in-out;
 }
 
 .coxswain-slot-label {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-bottom: 5px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--khaki);
     text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Add a cool megaphone icon to the coxswain slot */
+.coxswain-slot-label::before {
+    font-family: 'bootstrap-icons';
+    content: "\F488"; /* Bootstrap Icons megaphone icon */
+    margin-right: 8px;
+    font-weight: normal;
+}
+
+.coxswain-slot.drag-over {
+    background-color: var(--auburn);
+    border-color: var(--brand-red-hover);
+    box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.2);
 }
 
 /* Boat Lineups */
@@ -221,13 +231,22 @@ h5,
     border-color: var(--brand-red-hover);
 }
 
-.seat .roster-card,
-.coxswain-slot .coxswain-card {
+.seat .roster-card {
     width: 75%;
     cursor: default;
     border: none;
     padding: 5px;
     font-size: 0.9rem;
+}
+
+.coxswain-slot .coxswain-card {
+    flex-grow: 1; /* Allows the card to fill remaining space */
+    width: auto;   /* Overrides any fixed width */
+    cursor: default;
+    border: none;
+    padding: 5px;
+    font-size: 0.9rem;
+    margin-left: 10px; /* Adds space between the label and the card */
 }
 
 #boat1-panel .seat .roster-card,
@@ -586,27 +605,6 @@ h2[contenteditable="true"]:focus {
 }
 
 .rower-stats-card p {
-    margin: 2px 0;
-    color: var(--text-secondary);
-}
-
-.coxswain-stats-card {
-    background: rgba(165, 36, 34, 0.1);
-    border: 1px solid var(--border-sleek);
-    border-radius: 4px;
-    padding: 8px;
-    font-size: 12px;
-    grid-column: span 2;
-    margin-bottom: 10px;
-}
-
-.coxswain-stats-card h4 {
-    margin: 0 0 5px 0;
-    font-size: 14px;
-    color: var(--text-primary);
-}
-
-.coxswain-stats-card p {
     margin: 2px 0;
     color: var(--text-secondary);
 }
