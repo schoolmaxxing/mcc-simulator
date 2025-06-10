@@ -10,7 +10,7 @@
         "weight": 168.3,
         "following": 4.6,
         "best_rate": 36,
-        "graduation_year": 2025
+        "graduation_year": 2026
     },
     {
         "name": "Sam Peale",
@@ -20,9 +20,9 @@
             "port": 4.4,
             "starboard": 4.6
         },
-        "mentality": 4.2,
+        "mentality": 4.3,
         "weight": 162.4,
-        "following": 4.2,
+        "following": 3.9,
         "best_rate": 36,
         "graduation_year": 2025
     },
@@ -34,7 +34,7 @@
             "port": 4.0,
             "starboard": 4.1
         },
-        "mentality": 4.7,
+        "mentality": 4.2,
         "weight": 179.6,
         "following": 4.4,
         "best_rate": 36,
@@ -45,12 +45,12 @@
         "2k": "6:31.9",
         "rarity": "Mythic",
         "technique": {
-            "port": 4.6,
-            "starboard": 4.7
+            "port": 3.9,
+            "starboard": 4.1
         },
-        "mentality": 4.7,
+        "mentality": 4.4,
         "weight": 166.8,
-        "following": 4.8,
+        "following": 4.2,
         "best_rate": 36,
         "graduation_year": 2025
     },
@@ -64,7 +64,7 @@
         },
         "mentality": 4.0,
         "weight": 200.0,
-        "following": 4.8,
+        "following": 4.1,
         "best_rate": 33,
         "graduation_year": 2025
     },
@@ -78,9 +78,9 @@
         },
         "mentality": 3.9,
         "weight": 190.5,
-        "following": 4.4,
+        "following": 4.3,
         "best_rate": 36,
-        "graduation_year": 2026
+        "graduation_year": 2025
     },
     {
         "name": "Alex Barnes",
@@ -90,9 +90,9 @@
             "port": 4.4,
             "starboard": 2.5
         },
-        "mentality": 4.1,
+        "mentality": 3.3,
         "weight": 145.0,
-        "following": 5.0,
+        "following": 4.5,
         "best_rate": 36,
         "graduation_year": 2025
     },
@@ -108,7 +108,7 @@
         "weight": 155.6,
         "following": 5.0,
         "best_rate": 36,
-        "graduation_year": 2026
+        "graduation_year": 2025
     },
     {
         "name": "Holden Saunders",
@@ -118,11 +118,11 @@
             "port": 3.9,
             "starboard": 4.0
         },
-        "mentality": 4.4,
+        "mentality": 3.8,
         "weight": 133.6,
-        "following": 4.7,
+        "following": 4.2,
         "best_rate": 36,
-        "graduation_year": 2027
+        "graduation_year": 2026
     },
     {
         "name": "Finnegan Switzer",
@@ -132,11 +132,11 @@
             "port": 3.3,
             "starboard": 3.9
         },
-        "mentality": 4.5,
+        "mentality": 3.9,
         "weight": 151.0,
-        "following": 3.6,
+        "following": 3.3,
         "best_rate": 36,
-        "graduation_year": 2026
+        "graduation_year": 2025
     },
     {
         "name": "Adrian Wiklund",
@@ -146,11 +146,11 @@
             "port": 3.4,
             "starboard": 2.3
         },
-        "mentality": 4.1,
+        "mentality": 4.0,
         "weight": 195.6,
-        "following": 3.8,
+        "following": 3.5,
         "best_rate": 35,
-        "graduation_year": 2025
+        "graduation_year": 2027
     },
     {
         "name": "James Milward",
@@ -160,9 +160,9 @@
             "port": 2.4,
             "starboard": 3.2
         },
-        "mentality": 3.9,
+        "mentality": 3.1,
         "weight": 138.7,
-        "following": 3.7,
+        "following": 3.3,
         "best_rate": 36,
         "graduation_year": 2026
     },
@@ -174,9 +174,9 @@
             "port": 3.6,
             "starboard": 2.7
         },
-        "mentality": 4.5,
+        "mentality": 4.4,
         "weight": 153.2,
-        "following": 3.7,
+        "following": 3.5,
         "best_rate": 36,
         "graduation_year": 2027
     },
@@ -186,11 +186,11 @@
         "rarity": "Common",
         "technique": {
             "port": 1.9,
-            "starboard": 3.1
+            "starboard": 2.9
         },
-        "mentality": 4.2,
+        "mentality": 3.6,
         "weight": 136.7,
-        "following": 3.3,
+        "following": 2.7,
         "best_rate": 34,
         "graduation_year": 2027
     },
@@ -199,14 +199,14 @@
         "2k": "6:52.6",
         "rarity": "Uncommon",
         "technique": {
-            "port": 3.6,
+            "port": 3.7,
             "starboard": 2.1
         },
-        "mentality": 4.1,
+        "mentality": 3.9,
         "weight": 151.0,
         "following": 4.3,
         "best_rate": 36,
-        "graduation_year": 2026
+        "graduation_year": 2027
     },
     {
         "name": "Arham Jain",
@@ -218,9 +218,9 @@
         },
         "mentality": 2.7,
         "weight": 123.4,
-        "following": 4.7,
+        "following": 4.2,
         "best_rate": 36,
-        "graduation_year": 2025
+        "graduation_year": 2027
     },
     {
         "name": "Mickey Bekele",
