@@ -739,13 +739,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const dampingForce = -boatState.steeringAngularVelocity * 0.8;
 
         // 4. Calculate total angular acceleration and update velocity.
-        const angularAcceleration = randomPush + correctionForce + dampingForce;
-        // FIXED: Added speedMultiplier to the physics calculation
-        boatState.steeringAngularVelocity += angularAcceleration * normalizedDelta * speedMultiplier;
+const angularAcceleration = randomPush + correctionForce + dampingForce;
+// Use fixed timestep for consistent physics across devices
+const FIXED_PHYSICS_TIMESTEP = 1/480; // 60 FPS equivalent
+boatState.steeringAngularVelocity += angularAcceleration * FIXED_PHYSICS_TIMESTEP * speedMultiplier;
 
-        // 5. Update the boat's angle and cap it to prevent spinning.
-        // FIXED: Added speedMultiplier and removed the first redundant cap
-        boatState.steeringAngle += boatState.steeringAngularVelocity * normalizedDelta * speedMultiplier;
+// 5. Update the boat's angle and cap it to prevent spinning.
+boatState.steeringAngle += boatState.steeringAngularVelocity * FIXED_PHYSICS_TIMESTEP * speedMultiplier;
         boatState.steeringAngle = Math.max(-0.2, Math.min(0.2, boatState.steeringAngle)); // Approx +/- 3 degrees
 
         const {
