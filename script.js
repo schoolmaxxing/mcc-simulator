@@ -626,10 +626,10 @@ document.addEventListener('DOMContentLoaded', () => {
         // Compute elapsed time (in seconds) since last frame
         let timeDelta = (currentTime - lastFrameTime) / 1000;
         // Cap timeDelta so a single slow frame won't move boats too far
-        const MAX_TIME_DELTA = 0.05;   // 50 ms maximum step
+        const MAX_TIME_DELTA = 0.05; // 50 ms maximum step
         timeDelta = Math.min(timeDelta, MAX_TIME_DELTA);
         lastFrameTime = currentTime;
-        
+
         const activeStates = allBoatStates.slice(0, numberOfBoats);
         const allBoatsFinished = activeStates.every(s => s.isFinished);
 
@@ -727,7 +727,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const steeringQuality = boatState.coxswainStats.steeringQuality;
 
         // 1. Random "pushes" on the rudder. Less skilled coxswains cause bigger pushes.
-        const randomPush = (6 - steeringQuality) * 0.1 * (Math.random() - 0.5);
+        const randomPush = (6 - steeringQuality) * 0.085 * (Math.random() - 0.5);
 
         // 2. Corrective force. More skilled coxswains correct faster.
         const correctionForce = -boatState.steeringAngle * 0.5 * (steeringQuality / 5);
@@ -920,7 +920,7 @@ document.addEventListener('DOMContentLoaded', () => {
             totalWeight += rower.weight;
         });
         const avg500mSplit = (total2kSeconds / 8) / 4;
-        const baseSpeed = 210 / Math.pow(avg500mSplit, 0.80);
+        const baseSpeed = 66.5 / Math.pow(avg500mSplit, 0.55);
         let powerModifier = 1.0,
             totalTechAdjustment = 0,
             totalFollowingAdjustment = 0,
