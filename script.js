@@ -6,6 +6,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const rosterCardPopup = document.getElementById('roster-card-popup');
     const telemetryPanel = document.querySelector('.telemetry-panel');
     const boat3Elements = document.querySelectorAll('.boat-3-element');
+    const lineupLibraryBtns = document.querySelectorAll('.lineup-library-btn');
+    const lineupLibraryModal = document.getElementById('lineup-library-modal');
+    const lineupOptionsContainer = document.getElementById('lineup-options-container');
 
     // Boat Elements (Grouped)
     const boatNames = [document.getElementById('boat1-name'), document.getElementById('boat2-name'), document.getElementById('boat3-name')];
@@ -23,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const reraceBtn = document.getElementById('rerace-btn');
     const resetBoatsBtn = document.getElementById('reset-boats');
     const autofillBtn = document.getElementById('autofill-boats');
-    const setLineupsBtn = document.getElementById('set-lineups-btn');
     const winnerMessageEl = document.getElementById('winner-message');
     const speedSlider = document.getElementById('speed-slider');
     const speedLabel = document.getElementById('speed-label');
@@ -36,15 +38,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Game State
     let allRowers = [];
+    let predefinedLineups = [];
     let boat1Data = Array(8).fill(null);
     let boat2Data = Array(8).fill(null);
     let boat3Data = Array(8).fill(null);
     let allBoatData = [boat1Data, boat2Data, boat3Data];
+    let selectedBoatIndex = 0; // For the lineup library modal
 
     let raceAnimationId;
     let raceSpeedMultiplier = 1;
     let windCondition = 0;
-    let numberOfBoats = 3;
+    let numberOfBoats = 2;
     let lastFrameTime = 0;
     let raceTime = 0;
     let boat1State = {};
@@ -52,13 +56,20 @@ document.addEventListener('DOMContentLoaded', () => {
     let boat3State = {};
     let allBoatStates = [boat1State, boat2State, boat3State];
 
+    // Bootstrap modal instance
+    let lineupModal;
+
     // --- INITIALIZATION ---
-    fetch('rowers.json')
-        .then(response => response.json())
-        .then(data => {
-            allRowers = data;
-            initialize();
-        });
+    Promise.all([
+        fetch('rowers.json').then(response => response.json()),
+        fetch('lineups.json').then(response => response.json())
+    ]).then(([rowerData, lineupData]) => {
+        allRowers = rowerData;
+        predefinedLineups = lineupData;
+        initialize();
+    }).catch(error => {
+        console.error('Error loading data:', error);
+    });
 
     function initialize() {
         renderRosterList();
@@ -67,7 +78,70 @@ document.addEventListener('DOMContentLoaded', () => {
         setCanvasSize();
         setupContentEditableListeners();
         updateTelemetryHeaders();
+        setupLineupLibraryButtons();
         window.addEventListener('resize', setCanvasSize);
+        document.body.classList.add('two-boats-mode');
+        // Initialize Bootstrap modal
+        lineupModal = new bootstrap.Modal(lineupLibraryModal);
+    }
+
+    function setupLineupLibraryButtons() {
+        // Setup lineup library buttons
+        lineupLibraryBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                selectedBoatIndex = parseInt(e.currentTarget.dataset.boat) - 1;
+                document.getElementById('lineupLibraryModalLabel').textContent =
+                    `Select Lineup for ${boatNames[selectedBoatIndex].textContent}`;
+
+                // Generate lineup options from the predefined lineups
+                lineupOptionsContainer.innerHTML = '';
+                predefinedLineups.forEach((lineup, index) => {
+                    const option = document.createElement('button');
+                    option.type = 'button';
+                    option.className = 'list-group-item list-group-item-action bg-dark text-light';
+                    option.dataset.lineupIndex = index;
+
+                    // Get last names only
+                    const lastNames = lineup.rowers.map(fullName => {
+                        const nameParts = fullName.split(' ');
+                        return nameParts[nameParts.length - 1]; // Get the last part of the name
+                    });
+
+                    // Create summary of rowers for display with last names only
+                    const rowerSummary = lastNames.join(', ');
+
+                    option.innerHTML = `
+                    <strong>${lineup.name}</strong>
+                    <small class="d-block text-secondary">${rowerSummary}</small>
+                `;
+
+                    option.addEventListener('click', () => applyLineup(index));
+
+                    lineupOptionsContainer.appendChild(option);
+                });
+
+                lineupModal.show();
+            });
+        });
+    }
+
+    function applyLineup(lineupIndex) {
+        const lineup = predefinedLineups[lineupIndex];
+
+        if (lineup) {
+            // Set the rowers in the boat
+            allBoatData[selectedBoatIndex] = lineup.rowers.map(name =>
+                allRowers.find(rower => rower.name === name) || null
+            );
+
+            // Set the boat name to match the lineup name
+            boatNames[selectedBoatIndex].textContent = lineup.name;
+
+            // Update UI
+            setupAllBoatLineups();
+            updateTelemetryHeaders();
+            lineupModal.hide();
+        }
     }
 
     function setCanvasSize() {
@@ -305,16 +379,6 @@ document.addEventListener('DOMContentLoaded', () => {
         setupAllBoatLineups();
     }
 
-    function setPredefinedLineups() {
-        resetBoats();
-        const v1Names = ["Carson Fast", "Sam Peale", "Jack Kirk", "Gunnar Westland", "Henry Terrell", "Matthew Matar", "Alex Barnes", "Andrew Egorin"];
-        const v2Names = ["Holden Saunders", "Finnegan Switzer", "Adrian Wiklund", "James Milward", "Sean Noh", "Owen Kelly", "Minh Tran", "Arham Jain"];
-        boat1Data = v1Names.map(name => allRowers.find(rower => rower.name === name) || null);
-        boat2Data = v2Names.map(name => allRowers.find(rower => rower.name === name) || null);
-        allBoatData = [boat1Data, boat2Data, boat3Data];
-        setupAllBoatLineups();
-    }
-
     function updateBoatCount() {
         numberOfBoats = parseInt(boatCountSelect.value, 10);
         document.body.classList.toggle('two-boats-mode', numberOfBoats === 2);
@@ -335,9 +399,9 @@ document.addEventListener('DOMContentLoaded', () => {
         reraceBtn.classList.add('d-none');
         resetBoatsBtn.disabled = true;
         autofillBtn.disabled = true;
-        setLineupsBtn.disabled = true;
         windSlider.disabled = true;
         boatCountSelect.disabled = true;
+        lineupLibraryBtns.forEach(btn => btn.disabled = true);
         boatNames.forEach(el => el.setAttribute('contenteditable', 'false'));
         winnerMessageEl.textContent = '';
         raceTime = 0;
@@ -387,9 +451,9 @@ document.addEventListener('DOMContentLoaded', () => {
             reraceBtn.disabled = false;
             resetBoatsBtn.disabled = false;
             autofillBtn.disabled = false;
-            setLineupsBtn.disabled = false;
             windSlider.disabled = false;
             boatCountSelect.disabled = false;
+            lineupLibraryBtns.forEach(btn => btn.disabled = false);
             boatNames.forEach(el => el.setAttribute('contenteditable', 'true'));
         } else {
             raceAnimationId = requestAnimationFrame(raceLoop);
@@ -484,7 +548,7 @@ document.addEventListener('DOMContentLoaded', () => {
         boat2Data = Array(8).fill(null);
         boat3Data = Array(8).fill(null);
         allBoatData = [boat1Data, boat2Data, boat3Data];
-        
+
         boatNames.forEach((el, i) => {
             el.textContent = `Boat ${i + 1}`;
             el.setAttribute('contenteditable', 'true');
@@ -506,9 +570,9 @@ document.addEventListener('DOMContentLoaded', () => {
         reraceBtn.classList.add('d-none');
         resetBoatsBtn.disabled = false;
         autofillBtn.disabled = false;
-        setLineupsBtn.disabled = false;
         windSlider.disabled = false;
         boatCountSelect.disabled = false;
+        lineupLibraryBtns.forEach(btn => btn.disabled = false);
         drawInitialCanvas();
     }
 
@@ -763,7 +827,6 @@ document.addEventListener('DOMContentLoaded', () => {
     reraceBtn.addEventListener('click', startRace);
     resetBoatsBtn.addEventListener('click', resetBoats);
     autofillBtn.addEventListener('click', autofillBoats);
-    setLineupsBtn.addEventListener('click', setPredefinedLineups);
     boatCountSelect.addEventListener('change', updateBoatCount);
     rosterSearch.addEventListener('input', (e) => renderRosterList(e.target.value));
     speedSlider.addEventListener('input', (e) => {

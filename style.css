@@ -221,6 +221,58 @@ h2[contenteditable="true"]:focus {
     border-bottom: 2px solid var(--khaki);
 }
 
+/* Lineup Library Button */
+.lineup-library-btn {
+    padding: 0.25rem 0.5rem;
+    margin-left: 0.25rem;
+    font-size: 0.875rem;
+    line-height: 1;
+}
+
+.lineup-library-btn:hover {
+    color: var(--cream);
+    border-color: var(--khaki);
+}
+
+/* Lineup Library Modal */
+.modal-content {
+    border: 1px solid var(--border-sleek);
+}
+
+.modal-header,
+.modal-footer {
+    border-color: var(--border-sleek);
+}
+
+.list-group-item-action {
+    transition: all 0.2s;
+    position: relative;
+}
+
+.list-group-item-action:hover {
+    background-color: var(--bg-tertiary) !important;
+    border-color: var(--khaki);
+}
+
+/* Fix for hover border issue */
+.list-group-item-action:hover::before {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background-color: var(--khaki);
+    z-index: 1;
+}
+
+.list-group-item-action:first-child:hover::before {
+    display: none;
+}
+
+.list-group-item {
+    border-color: var(--border-sleek);
+}
 
 /* --- COOLER ROWER CARD POPUP --- */
 #roster-card-popup {
