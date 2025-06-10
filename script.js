@@ -620,10 +620,16 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function raceLoop(currentTime) {
-        if (lastFrameTime === 0) lastFrameTime = currentTime;
-        const timeDelta = (currentTime - lastFrameTime) / 1000;
+        if (lastFrameTime === 0) {
+            lastFrameTime = currentTime;
+        }
+        // Compute elapsed time (in seconds) since last frame
+        let timeDelta = (currentTime - lastFrameTime) / 1000;
+        // Cap timeDelta so a single slow frame won't move boats too far
+        const MAX_TIME_DELTA = 0.05;   // 50 ms maximum step
+        timeDelta = Math.min(timeDelta, MAX_TIME_DELTA);
         lastFrameTime = currentTime;
-
+        
         const activeStates = allBoatStates.slice(0, numberOfBoats);
         const allBoatsFinished = activeStates.every(s => s.isFinished);
 
