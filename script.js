@@ -623,11 +623,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (lastFrameTime === 0) {
             lastFrameTime = currentTime;
         }
+
         // Compute elapsed time (in seconds) since last frame
         let timeDelta = (currentTime - lastFrameTime) / 1000;
-        // Cap timeDelta so a single slow frame won't move boats too far
-        const MAX_TIME_DELTA = 0.05; // 50 ms maximum step
+
+        // Cap timeDelta to prevent huge jumps on slow frames
+        const MAX_TIME_DELTA = 0.02; // 20ms maximum step
         timeDelta = Math.min(timeDelta, MAX_TIME_DELTA);
+
         lastFrameTime = currentTime;
 
         const activeStates = allBoatStates.slice(0, numberOfBoats);
@@ -668,13 +671,13 @@ document.addEventListener('DOMContentLoaded', () => {
             windSlider.disabled = false;
             boatCountSelect.disabled = false;
             lineupLibraryBtns.forEach(btn => btn.disabled = false);
-            boatNames.forEach(el => el.setAttribute('contenteditable', 'true'));
+            boatNames.forEach(el => el.setAttribute('contentedelta', 'true'));
         } else {
             raceAnimationId = requestAnimationFrame(raceLoop);
         }
     }
 
-    function updateBoat(boatData, boatState, boatIndex, opponentStates, timeDelta, speedMultiplier) {
+    function updateBoat(boatData, boatState, boatIndex, opponentStates, normalizedDelta, speedMultiplier) {
         if (boatState.isFinished) return;
 
         const opponentDist = Math.max(0, ...opponentStates.map(s => s.distance));
@@ -727,7 +730,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const steeringQuality = boatState.coxswainStats.steeringQuality;
 
         // 1. Random "pushes" on the rudder. Less skilled coxswains cause bigger pushes.
-        const randomPush = (6 - steeringQuality) * 0.085 * (Math.random() - 0.5);
+        const randomPush = (6 - steeringQuality) * 0.1 * (Math.random() - 0.5);
 
         // 2. Corrective force. More skilled coxswains correct faster.
         const correctionForce = -boatState.steeringAngle * 0.5 * (steeringQuality / 5);
@@ -738,11 +741,11 @@ document.addEventListener('DOMContentLoaded', () => {
         // 4. Calculate total angular acceleration and update velocity.
         const angularAcceleration = randomPush + correctionForce + dampingForce;
         // FIXED: Added speedMultiplier to the physics calculation
-        boatState.steeringAngularVelocity += angularAcceleration * timeDelta * speedMultiplier;
+        boatState.steeringAngularVelocity += angularAcceleration * normalizedDelta * speedMultiplier;
 
         // 5. Update the boat's angle and cap it to prevent spinning.
         // FIXED: Added speedMultiplier and removed the first redundant cap
-        boatState.steeringAngle += boatState.steeringAngularVelocity * timeDelta * speedMultiplier;
+        boatState.steeringAngle += boatState.steeringAngularVelocity * normalizedDelta * speedMultiplier;
         boatState.steeringAngle = Math.max(-0.2, Math.min(0.2, boatState.steeringAngle)); // Approx +/- 3 degrees
 
         const {
@@ -752,13 +755,13 @@ document.addEventListener('DOMContentLoaded', () => {
         } = calculateBoatPhysics(boatData, boatState, opponentDist);
         boatState.strokeRate = strokeRate;
 
-        boatState.animationStrokeTime += timeDelta * speedMultiplier;
+        boatState.animationStrokeTime += normalizedDelta * speedMultiplier;
 
         const fullStrokeDuration = 60 / strokeRate;
         const driveDuration = fullStrokeDuration * 0.45;
         const recoveryDuration = fullStrokeDuration * 0.55;
 
-        boatState.timeInPhase += timeDelta * speedMultiplier;
+        boatState.timeInPhase += normalizedDelta * speedMultiplier;
         if (boatState.phase === 'drive' && boatState.timeInPhase >= driveDuration) {
             boatState.phase = 'recovery';
             boatState.timeInPhase = 0;
@@ -792,8 +795,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const lateralMovement = instantaneousVelocity * Math.sin(boatState.steeringAngle);
 
         // Update position
-        boatState.distance += forwardMovement * timeDelta * speedMultiplier;
-        boatState.yPosition += lateralMovement * timeDelta * speedMultiplier;
+        boatState.distance += forwardMovement * normalizedDelta * speedMultiplier;
+        boatState.yPosition += lateralMovement * normalizedDelta * speedMultiplier;
 
         // Optional: Add soft boundaries to prevent boats from going completely off-screen
         const laneHeight = canvas.height / numberOfBoats;
@@ -920,7 +923,7 @@ document.addEventListener('DOMContentLoaded', () => {
             totalWeight += rower.weight;
         });
         const avg500mSplit = (total2kSeconds / 8) / 4;
-        const baseSpeed = 66.5 / Math.pow(avg500mSplit, 0.55);
+        const baseSpeed = 207.5 / Math.pow(avg500mSplit, 0.80);
         let powerModifier = 1.0,
             totalTechAdjustment = 0,
             totalFollowingAdjustment = 0,
