@@ -1040,7 +1040,7 @@ boatState.steeringAngle += boatState.steeringAngularVelocity * FIXED_PHYSICS_TIM
         if (windCondition === 1) {
             windAdjustment = 0.135 + (weightDifference * 0.0035); // Slightly reduced tailwind benefit
         } else if (windCondition === -1) {
-            windAdjustment = -0.225 - (weightDifference * 0.0015); // Adjusted for correct headwind impact
+            windAdjustment = -0.265 - (weightDifference * 0.0035); // Adjusted for correct headwind impact
         }
 
         // Apply all adjustments to base speed

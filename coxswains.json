@@ -15,5 +15,14 @@
         "tech_calls": 4.3,
         "steering": 3.5,
         "graduation_year": 2027
+    },
+    {
+        "name": "Orie Butler",
+        "rarity": "Common",
+        "motivation": 3.0,
+        "strategy": 2.0,
+        "tech_calls": 2.0,
+        "steering": 2.2,
+        "graduation_year": 2027
     }
 ]
